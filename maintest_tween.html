@@ -46,6 +46,7 @@ function create() {
 	//player
 	game.player = game.add.sprite(game.width/2, game.height/2, "player");
 	game.player.anchor.setTo(0.5, 0.5);	
+	game.tweenPlayer.game.add.tween(player);
 	
 
 	//player physics
