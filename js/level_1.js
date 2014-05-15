@@ -96,7 +96,7 @@ var inputIsActive = function(button) {
 
 
 var createNewObstacle =  function (width, height, x, y) {
-
+	
 };
 
 
@@ -122,7 +122,8 @@ var createNewInteractable =  function (name, type, x, y, scale) {
 
 	if (type == "light" || "obstacle") 
 	{
-		this.name = game.add.group();
+		//is this how make new variable from a passed in name
+		this.[name] = game.add.group();
 
 		this.name = game.add.sprite(x, y, "interactableEmpty");
 		this.name.scale.x = scale;
