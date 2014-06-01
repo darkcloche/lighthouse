@@ -2,6 +2,24 @@ var GameState = function(game) {
 };
 
 
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/*
+  _____    _____    ______   _         ____               _____  
+ |  __ \  |  __ \  |  ____| | |       / __ \      /\     |  __ \ 
+ | |__) | | |__) | | |__    | |      | |  | |    /  \    | |  | |
+ |  ___/  |  _  /  |  __|   | |      | |  | |   / /\ \   | |  | |
+ | |      | | \ \  | |____  | |____  | |__| |  / ____ \  | |__| |
+ |_|      |_|  \_\ |______| |______|  \____/  /_/    \_\ |_____/ 
+                                                                 
+*/
+
+
+
+
+
+
+
 //called by "new Phaser.Game()"
 GameState.prototype.preload = function() {
 	this.load.image('player', 'assets/player.png');
@@ -12,25 +30,45 @@ GameState.prototype.preload = function() {
 
 
 
+
+
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/*
+   _____   _____    ______              _______   ______ 
+  / ____| |  __ \  |  ____|     /\     |__   __| |  ____|
+ | |      | |__) | | |__       /  \       | |    | |__   
+ | |      |  _  /  |  __|     / /\ \      | |    |  __|  
+ | |____  | | \ \  | |____   / ____ \     | |    | |____ 
+  \_____| |_|  \_\ |______| /_/    \_\    |_|    |______|
+*/
+
+
+
+
+
+
 //called by "new Phaser.Game()"
 GameState.prototype.create = function() {
 
-	//background
+	//init
 	this.stage.backgroundColor = 0x1E1F1E;
-
+	this.physics.startSystem(Phaser.Physics.ARCADE);
 
 	//player
 	this.player = this.add.sprite(this.game.width/2, this.game.height/2, "player");
-	this.player.anchor.setTo(0.5, 0.5);	
-	
+	this.player.anchor.setTo(0.5, 0.5);
 
 	//player physics
 	this.PLAYER_MAX_SPEED = 150;
 	this.PLAYER_DRAG = 1250;
 	this.PLAYER_ACCELERATION = 1500;
 
-	this.physics.startSystem(Phaser.Physics.ARCADE);
-	this.physics.enable(this.player, Phaser.Physics.ARCADE);
+	
+	this.game.physics.enable(this.player, Phaser.Physics.ARCADE);
 	this.player.body.maxVelocity.setTo(this.PLAYER_MAX_SPEED, this.PLAYER_MAX_SPEED);
 	this.player.body.drag.setTo(this.PLAYER_DRAG, this.PLAYER_DRAG);
 
@@ -41,9 +79,9 @@ GameState.prototype.create = function() {
 
 
 	//interactables
-	this.ALL_INTERACTABLES_GROUP = this.add.group();
+	this.INTERACTABLES_ARRAY = [];
 	this.createNewInteractable("light", 500, 200, 0.4)
-	this.createNewInteractable("light", 900, 600, 0.4)
+	this.createNewInteractable("blocker", 900, 600, 0.3)
 	this.createNewInteractable("light", 1200, 300, 0.4)
 
 
@@ -63,7 +101,36 @@ GameState.prototype.create = function() {
 		Phaser.Keyboard.D
 	]);
 
+	//bring player to top after everything is created
+	this.player.bringToTop();
+
 };
+
+
+
+
+
+
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/*
+  _    _   _____    _____               _______   ______ 
+ | |  | | |  __ \  |  __ \      /\     |__   __| |  ____|
+ | |  | | | |__) | | |  | |    /  \       | |    | |__   
+ | |  | | |  ___/  | |  | |   / /\ \      | |    |  __|  
+ | |__| | | |      | |__| |  / ____ \     | |    | |____ 
+  \____/  |_|      |_____/  /_/    \_\    |_|    |______|
+
+
+*/
+
+
+
+
+
 
 
 //called by "new Phaser.Game()"
@@ -106,13 +173,12 @@ GameState.prototype.update = function() {
 
 
 
-
-
-	//pickup feedback
-	if (this.isOnInteractable())
-	{
+/*
+	for (var obj in INTERACTABLES_ARRAY) {
 
 	}
+*/
+
 
 
 	//object pickup if player press E
@@ -133,6 +199,36 @@ GameState.prototype.update = function() {
 
 
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/*
+  ______   _    _   _   _    _____   _______   _____    ____    _   _    _____ 
+ |  ____| | |  | | | \ | |  / ____| |__   __| |_   _|  / __ \  | \ | |  / ____|
+ | |__    | |  | | |  \| | | |         | |      | |   | |  | | |  \| | | (___  
+ |  __|   | |  | | | . ` | | |         | |      | |   | |  | | | . ` |  \___ \ 
+ | |      | |__| | | |\  | | |____     | |     _| |_  | |__| | | |\  |  ____) |
+ |_|       \____/  |_| \_|  \_____|    |_|    |_____|  \____/  |_| \_| |_____/ 
+                                                                      
+*/
+
+
+
+
+
+
 
 
 
@@ -161,69 +257,90 @@ GameState.prototype.createNewObstacle =  function (width, height, x, y) {
 
 GameState.prototype.createPlayer = function (x, y) {
 	this.player = this.add.sprite(x, y, "player");
-	this.player.anchor.setTo(0.5, 0.5);	
-
-	this.physics.startSystem(Phaser.Physics.ARCADE);
-	this.physics.enable(this.player, Phaser.Physics.ARCADE);
+	this.player.anchor.setTo(0.5, 0.5);
+	this.game.physics.enable(this.player, Phaser.Physics.ARCADE);
 	this.player.body.maxVelocity.setTo(this.PLAYER_MAX_SPEED, this.PLAYER_MAX_SPEED);
 	this.player.body.drag.setTo(this.PLAYER_DRAG, this.PLAYER_DRAG);
 };
 
 
 
-
-
 GameState.prototype.createNewInteractable =  function (type, x, y, scale) {
+	var interactable = new InteractableObject(type, x, y, scale);
+	interactable.initialise();
+	this.INTERACTABLES_ARRAY[this.INTERACTABLES_ARRAY.length] = interactable;
+}
 
-	if (type == "light" || "blocker") 
-	{
-		//declares local group (entity + interactable), interactable and entity
-		var localInteractableGroup = this.add.group();
-		var interactable = this.add.sprite(x, y, "interactableUseRadiusEmpty");
-		var entity = undefined;
 
-		//sets interactable params, adds to local group
-		interactable.scale.x = scale;
-		interactable.scale.y = scale;
-		interactable.anchor.setTo(0.5, 0.5);
-		localInteractableGroup.add(interactable)
 
-		//adds relevant entity type
-		if (type == "light") 
+function InteractableObject(type, x, y, scale) {
+
+
+	//initial variables for creation
+	this.type = type;
+	this.x = x;
+	this.y = y;
+	this.scale = scale;
+	this.interactableGroup = game.add.group();
+	this.interactable = undefined;
+	this.useRadius = undefined;
+	this.state = "placed";
+
+
+
+	//creates the actual interactable
+	this.initialise = function() {
+
+		//adds relevant interactable type
+		if (this.type == "light") 
 		{
-			entity = this.add.sprite(x, y, "interactableLight");
-			entity.scale.x = 0.6
-			entity.scale.y = 0.6
+			this.interactable = game.add.sprite(x, y, "interactableLight");
+			this.interactable.scale.x = 0.6;
+			this.interactable.scale.y = 0.6;
+			this.interactable.anchor.setTo(0.5, 0.5);
 		}
 
-		if (type == "blocker") 
+
+		if (this.type == "blocker") 
 		{
-			entity = this.add.sprite(x, y, "interactableBlocker");
-			entity.scale.x = 0.5
-			entity.scale.y = 0.5
+			this.interactable = game.add.sprite(x, y, "interactableBlocker");
+			this.interactable.scale.x = 0.5;
+			this.interactable.scale.y = 0.5;
+			this.interactable.anchor.setTo(0.5, 0.5);
 		}
 
-		//sets entity params and adds to group
-		entity.anchor.setTo(0.5, 0.5);
-		localInteractableGroup.add(entity)
 
-		//adds local group to global group
-		this.ALL_INTERACTABLES_GROUP.add(localInteractableGroup);
-		this.player.bringToTop();
-		return true;
+		//sets useradius params, enables physics, adds to local group
+		this.useRadius = game.add.sprite(x, y, "interactableUseRadiusEmpty");
+		game.physics.enable(this.useRadius, Phaser.Physics.ARCADE);
+		this.useRadius.scale.x = scale;
+		this.useRadius.scale.y = scale;
+		this.useRadius.anchor.setTo(0.5, 0.5);
+
+
+
+
+		//adds elements to group
+		this.interactableGroup.add(this.interactable);
+		this.interactableGroup.add(this.useRadius);
 	}
 
-	else 
-	{
-		return false;
+	this.playerInRadius = function() {
+		game.add.tween(this.useRadius).to( { alpha: 0.2 }, 1250, Phaser.Easing.Cubic.InOut, true, 0, 10, true);
 	}
+
+
+
+	this.playerNotInRadius = function() {
+		//tween
+		this.useRadius.alpha = 0.05
+		game.add.tween(this.useRadius).to( { alpha: 0.2 }, 1250, Phaser.Easing.Cubic.InOut, true, 0, 10, true);
+	}
+
+
 };
 
 
-GameState.prototype.isOnInteractable = function () {
-	//do range checks to all interactables, return of interactable if on it
-
-};
 
 GameState.prototype.doPickUpInteractable = function (interactable) {
 	//add interactable to player group
@@ -254,6 +371,12 @@ this.bitmap.context.fillstyle = "rgb(100,100,100)";
 this.bitmap.context.fillRect = (0, 0, this.width, this.height);
 
 */
+
+
+
+
+
+
 
 var game = new Phaser.Game(1400, 900, Phaser.AUTO, 'game');
 game.state.add('game', GameState, true);
