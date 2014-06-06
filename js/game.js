@@ -16,17 +16,22 @@ var GameState = function(game) {
 
 
 
-
-
-
-
 //called by "new Phaser.Game()"
 GameState.prototype.preload = function() {
 	this.load.image('player', 'assets/player.png');
-	this.load.image('interactableUseRadiusEmpty', 'assets/interactable_empty.png');
-	this.load.image('interactableUseRadiusOccupied', 'assets/interactable_full.png');
+	this.load.image('useRadiusBorder', 'assets/use_radius_border.png');
+	this.load.image('useRadiusFill', 'assets/use_radius_fill.png');
 	this.load.image('interactableLight', 'assets/interactable_light.png');
 };
+
+
+
+
+
+
+
+
+
 
 
 
@@ -49,6 +54,8 @@ GameState.prototype.preload = function() {
 
 
 
+var GLOBAL_PLAYER = undefined;
+var GLOBAL_INTERACTABLES_ARRAY = [];
 
 
 //called by "new Phaser.Game()"
@@ -58,30 +65,26 @@ GameState.prototype.create = function() {
 	this.stage.backgroundColor = 0x1E1F1E;
 	this.physics.startSystem(Phaser.Physics.ARCADE);
 
+
 	//player
 	this.player = this.add.sprite(this.game.width/2, this.game.height/2, "player");
 	this.player.anchor.setTo(0.5, 0.5);
+	GLOBAL_PLAYER = this.player;
+
 
 	//player physics
 	this.PLAYER_MAX_SPEED = 150;
 	this.PLAYER_DRAG = 1250;
 	this.PLAYER_ACCELERATION = 1500;
-
-	
 	this.game.physics.enable(this.player, Phaser.Physics.ARCADE);
 	this.player.body.maxVelocity.setTo(this.PLAYER_MAX_SPEED, this.PLAYER_MAX_SPEED);
 	this.player.body.drag.setTo(this.PLAYER_DRAG, this.PLAYER_DRAG);
 
 
-	//you have to add the actual parent objects you want to access to the tween manager here, not in the tween call below
-	//currently not working, probably need to use something other than tween
-	//this.this.PLAYER_ACCELERATIONTween = this.add.tween(this.player.body.acceleration); 
-
-
 	//interactables
-	this.INTERACTABLES_ARRAY = [];
-	this.createNewInteractable("light", 500, 200, 0.4)
-	this.createNewInteractable("blocker", 900, 600, 0.3)
+	GLOBAL_INTERACTABLES_ARRAY = [];
+	this.createNewInteractable("light", 600, 400, 0.4)
+	this.createNewInteractable("blocker", 900, 600, 0.4)
 	this.createNewInteractable("light", 1200, 300, 0.4)
 
 
@@ -101,10 +104,16 @@ GameState.prototype.create = function() {
 		Phaser.Keyboard.D
 	]);
 
+
 	//bring player to top after everything is created
 	this.player.bringToTop();
 
 };
+
+
+
+
+
 
 
 
@@ -126,10 +135,6 @@ GameState.prototype.create = function() {
 
 
 */
-
-
-
-
 
 
 
@@ -158,47 +163,33 @@ GameState.prototype.update = function() {
 	}
 
 
+
 	//if keys are not held down, reset acceleration
 	if (!this.inputIsActive("W") && !this.inputIsActive("S")) 
 	{
 		this.player.body.acceleration.y = 0;
-		//this.this.PLAYER_ACCELERATIONTween.to({y: 0}, 2000, Phaser.Easing.Linear.None);
 	}
 
 	if (!this.inputIsActive("A") && !this.inputIsActive("D")) 
 	{
 		this.player.body.acceleration.x = 0;
-		//this.this.PLAYER_ACCELERATIONTween.to({x: 0}, 2000, Phaser.Easing.Linear.None);
 	}
 
 
 
-/*
-	for (var obj in INTERACTABLES_ARRAY) {
-
-	}
-*/
-
-
-
-	//object pickup if player press E
-	if (this.inputIsActive("E")) 
+	//updates every interactable to check correct feedback is being shown
+	for (i in GLOBAL_INTERACTABLES_ARRAY)
 	{
-		if (!this.hasInteractablePickedUp) 
-		{
-			if (this.isOnInteractable() !== false) 
-			{
-				this.pickUpInteractable(this.isOnInteractable());
-			}
-			else 
-			{
-				this.doDropInteractable(this.hasInteractablePickedUp());
-			}
-		}
+		GLOBAL_INTERACTABLES_ARRAY[i].updateFeedback();
 	}
+
 
 
 };
+
+
+
+
 
 
 
@@ -226,9 +217,14 @@ GameState.prototype.update = function() {
 
 
 
-
-
-
+//creates player
+GameState.prototype.createPlayer = function (x, y) {
+	this.player = this.add.sprite(x, y, "player");
+	this.player.anchor.setTo(0.5, 0.5);
+	this.game.physics.enable(this.player, Phaser.Physics.ARCADE);
+	this.player.body.maxVelocity.setTo(this.PLAYER_MAX_SPEED, this.PLAYER_MAX_SPEED);
+	this.player.body.drag.setTo(this.PLAYER_DRAG, this.PLAYER_DRAG);
+};
 
 
 
@@ -250,95 +246,15 @@ GameState.prototype.inputIsActive = function(button) {
 
 
 
-GameState.prototype.createNewObstacle =  function (width, height, x, y) {
-	
-};
-
-
-GameState.prototype.createPlayer = function (x, y) {
-	this.player = this.add.sprite(x, y, "player");
-	this.player.anchor.setTo(0.5, 0.5);
-	this.game.physics.enable(this.player, Phaser.Physics.ARCADE);
-	this.player.body.maxVelocity.setTo(this.PLAYER_MAX_SPEED, this.PLAYER_MAX_SPEED);
-	this.player.body.drag.setTo(this.PLAYER_DRAG, this.PLAYER_DRAG);
-};
-
-
-
 GameState.prototype.createNewInteractable =  function (type, x, y, scale) {
 	var interactable = new InteractableObject(type, x, y, scale);
 	interactable.initialise();
-	this.INTERACTABLES_ARRAY[this.INTERACTABLES_ARRAY.length] = interactable;
+	GLOBAL_INTERACTABLES_ARRAY[GLOBAL_INTERACTABLES_ARRAY.length] = interactable;
 }
 
 
 
-function InteractableObject(type, x, y, scale) {
 
-
-	//initial variables for creation
-	this.type = type;
-	this.x = x;
-	this.y = y;
-	this.scale = scale;
-	this.interactableGroup = game.add.group();
-	this.interactable = undefined;
-	this.useRadius = undefined;
-	this.state = "placed";
-
-
-
-	//creates the actual interactable
-	this.initialise = function() {
-
-		//adds relevant interactable type
-		if (this.type == "light") 
-		{
-			this.interactable = game.add.sprite(x, y, "interactableLight");
-			this.interactable.scale.x = 0.6;
-			this.interactable.scale.y = 0.6;
-			this.interactable.anchor.setTo(0.5, 0.5);
-		}
-
-
-		if (this.type == "blocker") 
-		{
-			this.interactable = game.add.sprite(x, y, "interactableBlocker");
-			this.interactable.scale.x = 0.5;
-			this.interactable.scale.y = 0.5;
-			this.interactable.anchor.setTo(0.5, 0.5);
-		}
-
-
-		//sets useradius params, enables physics, adds to local group
-		this.useRadius = game.add.sprite(x, y, "interactableUseRadiusEmpty");
-		game.physics.enable(this.useRadius, Phaser.Physics.ARCADE);
-		this.useRadius.scale.x = scale;
-		this.useRadius.scale.y = scale;
-		this.useRadius.anchor.setTo(0.5, 0.5);
-
-
-
-
-		//adds elements to group
-		this.interactableGroup.add(this.interactable);
-		this.interactableGroup.add(this.useRadius);
-	}
-
-	this.playerInRadius = function() {
-		game.add.tween(this.useRadius).to( { alpha: 0.2 }, 1250, Phaser.Easing.Cubic.InOut, true, 0, 10, true);
-	}
-
-
-
-	this.playerNotInRadius = function() {
-		//tween
-		this.useRadius.alpha = 0.05
-		game.add.tween(this.useRadius).to( { alpha: 0.2 }, 1250, Phaser.Easing.Cubic.InOut, true, 0, 10, true);
-	}
-
-
-};
 
 
 
@@ -354,8 +270,8 @@ GameState.prototype.hasInteractablePickedUp = function () {
 	
 };
 
-GameState.prototype.changeInteractableState = function(interactable, state) {
-	//change texture
+GameState.prototype.createNewObstacle =  function (width, height, x, y) {
+	
 };
 
 
@@ -364,19 +280,159 @@ GameState.prototype.changeInteractableState = function(interactable, state) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /*
-
-//WHAT IS THIS
-this.bitmap.context.fillstyle = "rgb(100,100,100)";
-this.bitmap.context.fillRect = (0, 0, this.width, this.height);
-
+   ____    ____         _   ______    _____   _______    _____ 
+  / __ \  |  _ \       | | |  ____|  / ____| |__   __|  / ____|
+ | |  | | | |_) |      | | | |__    | |         | |    | (___  
+ | |  | | |  _ <   _   | | |  __|   | |         | |     \___ \ 
+ | |__| | | |_) | | |__| | | |____  | |____     | |     ____) |
+  \____/  |____/   \____/  |______|  \_____|    |_|    |_____/ 
 */
 
 
 
+function InteractableObject(type, x, y, scale) {
+
+	//initial variables for creation
+	this.type = type;
+	this.x = x;
+	this.y = y;
+	this.scale = scale;
+	this.useRadiusInsideScale = -0.03
+	this.useRadiusInsideTime = 
+	this.interactableGroup = game.add.group();
+	this.feedbackState = "notInRadius";
+
+
+	//creates the actual interactable
+	this.initialise = function() {
+
+		//adds relevant interactable type depending on object "type"
+		if (this.type == "light") 
+		{
+			this.interactable = game.add.sprite(x, y, "interactableLight");
+		}
+
+
+		if (this.type == "blocker") 
+		{
+			this.interactable = game.add.sprite(x, y, "interactableBlocker");
+		}
+
+		this.interactable.scale.x = 0.6;
+		this.interactable.scale.y = 0.6;
+		this.interactable.anchor.setTo(0.5, 0.5);
+
+
+
+		//creates useradius elements, sets scale and anchor
+		this.useRadiusBorder = game.add.sprite(x, y, "useRadiusBorder");
+		this.useRadiusBorder.scale.x = scale;
+		this.useRadiusBorder.scale.y = scale;
+		this.useRadiusBorder.anchor.setTo(0.5, 0.5);
+		this.useRadiusBorder.alpha = 0.1;
+
+		this.useRadiusFill = game.add.sprite(x, y, "useRadiusFill");
+		this.useRadiusFill.scale.x = scale;
+		this.useRadiusFill.scale.y = scale;
+		this.useRadiusFill.anchor.setTo(0.5, 0.5);
+		this.useRadiusFill.alpha = 0;
+
+
+
+		//tweens for feedback
+		this.useRadiusBorderTweenAlphaIn = game.add.tween(this.useRadiusBorder);
+		this.useRadiusBorderTweenAlphaOut = game.add.tween(this.useRadiusBorder);
+		this.useRadiusBorderTweenXScaleIn = game.add.tween(this.useRadiusBorder.scale);
+		this.useRadiusBorderTweenXScaleOut = game.add.tween(this.useRadiusBorder.scale);
+		this.useRadiusBorderTweenYScaleIn = game.add.tween(this.useRadiusBorder.scale);
+		this.useRadiusBorderTweenYScaleOut = game.add.tween(this.useRadiusBorder.scale);
+
+		this.useRadiusFillTweenAlphaIn = game.add.tween(this.useRadiusFill);
+		this.useRadiusFillTweenAlphaOut = game.add.tween(this.useRadiusFill);
+		this.useRadiusFillTweenXScaleIn = game.add.tween(this.useRadiusFill.scale);
+		this.useRadiusFillTweenXScaleOut = game.add.tween(this.useRadiusFill.scale);
+		this.useRadiusFillTweenYScaleIn = game.add.tween(this.useRadiusFill.scale);
+		this.useRadiusFillTweenYScaleOut = game.add.tween(this.useRadiusFill.scale);
+
+
+
+		//adds elements to group
+		this.interactableGroup.add(this.interactable);
+		this.interactableGroup.add(this.useRadiusBorder);
+	}
+
+
+	this.showInRadiusFeedback = function() {
+		this.feedbackState = "inRadius";
+
+		this.useRadiusBorderTweenAlphaIn.to( { alpha: 0.8 }, 250, Phaser.Easing.Bounce.Out, true, 10, 0, false)
+		this.useRadiusBorderTweenXScaleIn.to( { x: scale + this.useRadiusInsideScale }, 250, Phaser.Easing.Bounce.Out, true, 10, 0, false)
+		this.useRadiusBorderTweenYScaleIn.to( { y: scale + this.useRadiusInsideScale }, 250, Phaser.Easing.Bounce.Out, true, 10, 0, false)
+
+		this.useRadiusFillTweenAlphaIn.to( { alpha: 0.15 }, 250, Phaser.Easing.Bounce.Out, true, 10, 0, false)
+		this.useRadiusFillTweenXScaleIn.to( { x: scale + this.useRadiusInsideScale }, 250, Phaser.Easing.Bounce.Out, true, 10, 0, false)
+		this.useRadiusFillTweenYScaleIn.to( { y: scale + this.useRadiusInsideScale }, 250, Phaser.Easing.Bounce.Out, true, 10, 0, false)
+		
+	}
+
+
+	this.showNotInRadiusFeedback = function() {
+		this.feedbackState = "notInRadius";
+
+		this.useRadiusBorderTweenAlphaOut.to( { alpha: 0.2 }, 350, Phaser.Easing.Bounce.Out, true, 10, 0, false)
+		this.useRadiusBorderTweenXScaleOut.to( { x: scale }, 350, Phaser.Easing.Bounce.Out, true, 10, 0, false)
+		this.useRadiusBorderTweenYScaleOut.to( { y: scale }, 350, Phaser.Easing.Bounce.Out, true, 10, 0, false)
+
+		this.useRadiusFillTweenAlphaOut.to( { alpha: 0 }, 350, Phaser.Easing.Bounce.Out, true, 10, 0, false)
+		this.useRadiusFillTweenXScaleOut.to( { x: scale }, 350, Phaser.Easing.Bounce.Out, true, 10, 0, false)
+		this.useRadiusFillTweenYScaleOut.to( { y: scale }, 350, Phaser.Easing.Bounce.Out, true, 10, 0, false)
+	
+
+	}
+
+	//looping one to go somewhere
+	// .to( { alpha: 0.2 }, 1250, Phaser.Easing.Cubic.InOut, true, 0, 0, true);
+
+
+	//updates feebdack to be correct based on player when called
+	this.updateFeedback = function() {
+		if (game.physics.arcade.distanceBetween(GLOBAL_PLAYER, this.interactable) <= 45) 
+		{
+			if (this.feedbackState !== "inRadius")
+			{
+				this.showInRadiusFeedback();
+			}
+		}
+
+		else if (this.feedbackState !== "notInRadius")
+		{
+			this.showNotInRadiusFeedback();
+		}
+
+	}
+
+};
 
 
 
 
+
+
+//kicks off actual game
 var game = new Phaser.Game(1400, 900, Phaser.AUTO, 'game');
 game.state.add('game', GameState, true);
