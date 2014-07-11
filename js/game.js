@@ -1,4 +1,6 @@
-var GameState = function(game) {
+var GameState = function(game)
+{
+
 };
 
 
@@ -17,11 +19,12 @@ var GameState = function(game) {
 
 
 //called by "new Phaser.Game()"
-GameState.prototype.preload = function() {
+GameState.prototype.preload = function()
+{
 	this.load.image('player', 'assets/player.png');
 	this.load.image('useRadiusBorder', 'assets/use_radius_border.png');
 	this.load.image('useRadiusFill', 'assets/use_radius_fill.png');
-	this.load.image('interactableLight', 'assets/interactable_light.png');
+	this.load.image('EntityLight', 'assets/interactable_light.png');
 };
 
 
@@ -55,11 +58,26 @@ GameState.prototype.preload = function() {
 
 
 var GLOBAL_PLAYER = undefined;
-var GLOBAL_INTERACTABLES_ARRAY = [];
+var GLOBAL_ENTITIES_ARRAY = [];
+var OBJECT_DICTIONARY = 
+{
+	light: 
+		{ 
+			textureName: "EntityLight",
+			scale: 0.5
+		},
+
+	blocker: 
+		{ 
+			textureName: "EntityBlocker",
+			scale: 0.4
+		},
+};
 
 
 //called by "new Phaser.Game()"
-GameState.prototype.create = function() {
+GameState.prototype.create = function()
+{
 
 	//init
 	this.stage.backgroundColor = 0x1E1F1E;
@@ -81,9 +99,11 @@ GameState.prototype.create = function() {
 	this.player.body.drag.setTo(this.PLAYER_DRAG, this.PLAYER_DRAG);
 
 
-	//interactables
-	GLOBAL_INTERACTABLES_ARRAY = [];
-	this.createNewInteractable("light", 200, 100, 0.4)
+	//Entitys
+	GLOBAL_ENTITIES_ARRAY = [];
+	this.createNewEntity("light", 200, 100, 0.4);
+	this.createNewEntity("light", 400, 300, 0.4);	
+	this.createNewEntity("light", 600, 150, 0.4);
 
 
 	//light bitmap setup (unsure how this shit works, am scared by it)
@@ -137,7 +157,8 @@ GameState.prototype.create = function() {
 
 
 //called by "new Phaser.Game()"
-GameState.prototype.update = function() {
+GameState.prototype.update = function()
+{
 
 	//applies acceleration in the required direction when key is pressed
 	if (this.inputIsActive("W")) 
@@ -162,31 +183,27 @@ GameState.prototype.update = function() {
 
 
 
-	//if keys are not held down, reset acceleration
-	if (!this.inputIsActive("W") && !this.inputIsActive("S")) 
+
+	//if no keys are not held down or opposite keys are held down, reset acceleration
+	if ((!this.inputIsActive("W") && !this.inputIsActive("S")) || (this.inputIsActive("W") && this.inputIsActive("S")))
 	{
 		this.player.body.acceleration.y = 0;
 	}
 
-	if (!this.inputIsActive("A") && !this.inputIsActive("D")) 
+	if ((!this.inputIsActive("A") && !this.inputIsActive("D")) || (this.inputIsActive("A") && this.inputIsActive("D")))
 	{
 		this.player.body.acceleration.x = 0;
 	}
 
 
 
-	//updates every interactable to check correct feedback is being shown
-	for (i in GLOBAL_INTERACTABLES_ARRAY)
+	//updates every Entity to check correct feedback is being shown
+	for (i in GLOBAL_ENTITIES_ARRAY)
 	{
-		GLOBAL_INTERACTABLES_ARRAY[i].updateDistanceToPlayer();
-		GLOBAL_INTERACTABLES_ARRAY[i].updateIsTweeningChecks();
-		GLOBAL_INTERACTABLES_ARRAY[i].updateInRadiusFeedback();
-		GLOBAL_INTERACTABLES_ARRAY[i].updateNearRadiusFeedback();
-		//console.log("update says is tweening == " + GLOBAL_INTERACTABLES_ARRAY[i].isTweening);
-		//console.log("update says is tweening == " + GLOBAL_INTERACTABLES_ARRAY[i].feedbackState);
+		GLOBAL_ENTITIES_ARRAY[i].updateClosestPlayerDistance();
+		GLOBAL_ENTITIES_ARRAY[i].updateEnterRadiusFeedback();
+		GLOBAL_ENTITIES_ARRAY[i].updateNearRadiusFeedback();
 	}
-
-
 
 };
 
@@ -221,7 +238,8 @@ GameState.prototype.update = function() {
 
 
 //creates player
-GameState.prototype.createPlayer = function (x, y) {
+GameState.prototype.createPlayer = function (x, y)
+{
 	this.player = this.add.sprite(x, y, "player");
 	this.player.anchor.setTo(0.5, 0.5);
 	this.game.physics.enable(this.player, Phaser.Physics.ARCADE);
@@ -233,7 +251,8 @@ GameState.prototype.createPlayer = function (x, y) {
 
 
 //checks if supplied button name is currently pressed down
-GameState.prototype.inputIsActive = function(button) {
+GameState.prototype.inputIsActive = function(button)
+{
 
 	var isActive = false;
 	button = button.toUpperCase() 
@@ -249,10 +268,10 @@ GameState.prototype.inputIsActive = function(button) {
 
 
 
-GameState.prototype.createNewInteractable =  function (type, x, y, scale) {
-	var interactable = new InteractableObject(type, x, y, scale);
-	interactable.initialise();
-	GLOBAL_INTERACTABLES_ARRAY[GLOBAL_INTERACTABLES_ARRAY.length] = interactable;
+GameState.prototype.createNewEntity =  function (type, x, y, scale)
+{
+	var entity = new InteractableEntity(type, x, y, scale);
+	GLOBAL_ENTITIES_ARRAY[GLOBAL_ENTITIES_ARRAY.length] = entity;
 }
 
 
@@ -261,19 +280,23 @@ GameState.prototype.createNewInteractable =  function (type, x, y, scale) {
 
 
 
-GameState.prototype.doPickUpInteractable = function (interactable) {
-	//add interactable to player group
+GameState.prototype.doPickUpEntity = function (Entity)
+{
+	//add Entity to player group
 };
 
-GameState.prototype.doDropInteractable = function (interactable) {
+GameState.prototype.doDropEntity = function (Entity)
+{
 
 };
 
-GameState.prototype.hasInteractablePickedUp = function () {
+GameState.prototype.hasEntityPickedUp = function ()
+{
 	
 };
 
-GameState.prototype.createNewObstacle =  function (width, height, x, y) {
+GameState.prototype.createNewObstacle =  function (width, height, x, y)
+{
 	
 };
 
@@ -308,186 +331,136 @@ GameState.prototype.createNewObstacle =  function (width, height, x, y) {
 
 
 
-function InteractableObject(type, x, y, scale) {
+function InteractableEntity(type, x, y, scale)
+{
 
 	//initial variables for creation from function call
 	this.type = type;
 	this.x = x;
 	this.y = y;
-	this.scale = scale;
-	this.interactableGroup = game.add.group();
+	this.useRadiusScale = scale;
+	this.entityGroup = game.add.group();
 
 
-	//interactable tweakable parameters
+	//object tweakable parameters
 	this.usableRange = 55;
-	this.useRadiusInsideScale = -0.03;
+	this.useRadiusStartAlpha = 0.2;
 	this.useRadiusVisibleRange = 150;
 
 
 	//initial values of variables controlled by functions
-	this.isTweening = false;
-	this.feedbackState = "notInRadius";
+	this.feedbackState = "LeaveRadius";
 	this.distanceToPlayer = 1000;
 	this.useRadiusDistanceToPlayerAlpha = 0;
 
 
+	//adds relevant Entity type depending on object "type"
+	var entityInfo = OBJECT_DICTIONARY[this.type];
+	this.entity = game.add.sprite(x, y, entityInfo.textureName);
+	this.entity.scale.x = this.entity.scale.y = entityInfo.scale;
+	this.entity.anchor.setTo(0.5, 0.5);
 
 
-	//creates the actual interactable
-	this.initialise = function() {
+	//creates useradius elements, sets scale and anchor
+	this.useRadiusBorder = game.add.sprite(x, y, "useRadiusBorder");
+	this.useRadiusBorder.scale.x = this.useRadiusBorder.scale.y = this.useRadiusScale;
+	this.useRadiusBorder.anchor.setTo(0.5, 0.5);
+	this.useRadiusBorder.alpha = 0;
+
+	this.useRadiusFill = game.add.sprite(x, y, "useRadiusFill");
+	this.useRadiusFill.scale.x = this.useRadiusFill.scale.y = this.useRadiusScale;
+	this.useRadiusFill.anchor.setTo(0.5, 0.5);
+	this.useRadiusFill.alpha = 0;
 
 
-		//adds relevant interactable type depending on object "type"
-		if (this.type == "light") 
-		{
-			this.interactable = game.add.sprite(x, y, "interactableLight");
-		}
-
-		if (this.type == "blocker") 
-		{
-			this.interactable = game.add.sprite(x, y, "interactableBlocker");
-		}
-
-		this.interactable.scale.x = 0.6;
-		this.interactable.scale.y = 0.6;
-		this.interactable.anchor.setTo(0.5, 0.5);
-
-
-		//creates useradius elements, sets scale and anchor
-		this.useRadiusBorder = game.add.sprite(x, y, "useRadiusBorder");
-		this.useRadiusBorder.scale.x = scale;
-		this.useRadiusBorder.scale.y = scale;
-		this.useRadiusBorder.anchor.setTo(0.5, 0.5);
-		this.useRadiusBorder.alpha = 0;
-
-		this.useRadiusFill = game.add.sprite(x, y, "useRadiusFill");
-		this.useRadiusFill.scale.x = scale;
-		this.useRadiusFill.scale.y = scale;
-		this.useRadiusFill.anchor.setTo(0.5, 0.5);
-		this.useRadiusFill.alpha = 0;
-
-
-		//tweens for feedback in
-		this.useRadiusBorderTweenAlphaIn = game.add.tween(this.useRadiusBorder);
-		this.useRadiusBorderTweenAlphaOut = game.add.tween(this.useRadiusBorder);
-		this.useRadiusBorderTweenXScaleIn = game.add.tween(this.useRadiusBorder.scale);
-		this.useRadiusBorderTweenXScaleOut = game.add.tween(this.useRadiusBorder.scale);
-		this.useRadiusBorderTweenYScaleIn = game.add.tween(this.useRadiusBorder.scale);
-		this.useRadiusBorderTweenYScaleOut = game.add.tween(this.useRadiusBorder.scale);
-
-
-		//tweens for feedback out
-		this.useRadiusFillTweenAlphaIn = game.add.tween(this.useRadiusFill);
-		this.useRadiusFillTweenAlphaOut = game.add.tween(this.useRadiusFill);
-		this.useRadiusFillTweenXScaleIn = game.add.tween(this.useRadiusFill.scale);
-		this.useRadiusFillTweenXScaleOut = game.add.tween(this.useRadiusFill.scale);
-		this.useRadiusFillTweenYScaleIn = game.add.tween(this.useRadiusFill.scale);
-		this.useRadiusFillTweenYScaleOut = game.add.tween(this.useRadiusFill.scale);
-
-
-		//oncomplete callbacks
-		this.useRadiusBorderTweenAlphaIn.onComplete.add(function() {
-			this.isTweening = false;
-			// console.log("is tweening equals = " + this.isTweening);
-		}, this);
-
-		this.useRadiusBorderTweenAlphaOut.onComplete.add(function() {
-			this.isTweening = false;
-			// console.log("is tweening equals = " + this.isTweening);
-		}, this);
-
-
-		//adds elements to group
-		this.interactableGroup.add(this.interactable);
-		this.interactableGroup.add(this.useRadiusBorder);
-	}
-
-
-
-	this.showInRadiusFeedback = function() {
-
-		//bounces the useradius and fill in
-		this.useRadiusBorderTweenAlphaIn.to( { alpha: 0.6 }, 250, Phaser.Easing.Bounce.Out, true, 0, 0, false)
-		this.useRadiusBorderTweenXScaleIn.to( { x: scale + this.useRadiusInsideScale }, 250, Phaser.Easing.Bounce.Out, true, 0, 0, false)
-		this.useRadiusBorderTweenYScaleIn.to( { y: scale + this.useRadiusInsideScale }, 250, Phaser.Easing.Bounce.Out, true, 0, 0, false)
-
-		this.useRadiusFillTweenAlphaIn.to( { alpha: 0.15 }, 250, Phaser.Easing.Bounce.Out, true, 0, 0, false)
-		this.useRadiusFillTweenXScaleIn.to( { x: scale + this.useRadiusInsideScale }, 250, Phaser.Easing.Bounce.Out, true, 0, 0, false)
-		this.useRadiusFillTweenYScaleIn.to( { y: scale + this.useRadiusInsideScale }, 250, Phaser.Easing.Bounce.Out, true, 0, 0, false)
-		
-
-	}
-
-
-
-	this.showNotInRadiusFeedback = function() {
-
-		//bounces the useradius and fill out
-		this.useRadiusBorderTweenAlphaOut.to( { alpha: this.useRadiusDistanceToPlayerAlpha }, 200, Phaser.Easing.Linear.Out, true, 0, 0, false)
-		this.useRadiusBorderTweenXScaleOut.to( { x: scale }, 200, Phaser.Easing.Linear.Out, true, 0, 0, false)
-		this.useRadiusBorderTweenYScaleOut.to( { y: scale }, 200, Phaser.Easing.Linear.Out, true, 0, 0, false)
-
-		this.useRadiusFillTweenAlphaOut.to( { alpha: 0 }, 200, Phaser.Easing.Linear.Out, true, 0, 0, false)
-		this.useRadiusFillTweenXScaleOut.to( { x: scale }, 200, Phaser.Easing.Linear.Out, true, 0, 0, false)
-		this.useRadiusFillTweenYScaleOut.to( { y: scale }, 200, Phaser.Easing.Linear.Out, true, 0, 0, false)
+	//tween local vars
+	var leaveVisibleRangeTime = 500;
+	var useRadiusShrunkScale = -0.03;
+	var enterTime = 325;
+	var leaveTime = 250;
+	var autoStart = false;
+	var entityScaleDifference = 0.05;
+	var entityScaleLoopTime = 500;
 	
-		
-		
+
+	//tweens for enter feedback
+	this.useRadiusBorderTweenAlphaEnter = game.add.tween(this.useRadiusBorder);
+	this.useRadiusBorderTweenAlphaEnter.to( { alpha: 0.6 }, enterTime, Phaser.Easing.Quadratic.InOut, autoStart, 0, 0, false);
+	this.useRadiusBorderTweenScaleEnter = game.add.tween(this.useRadiusBorder.scale);
+	this.useRadiusBorderTweenScaleEnter.to( { x: this.useRadiusScale + useRadiusShrunkScale, y: this.useRadiusScale + useRadiusShrunkScale }, enterTime, Phaser.Easing.Bounce.Out, autoStart, 0, 0, false);
+
+	this.useRadiusFillTweenAlphaEnter = game.add.tween(this.useRadiusFill);
+	this.useRadiusFillTweenAlphaEnter.to( { alpha: 0.15 }, enterTime, Phaser.Easing.Quadratic.InOut, autoStart, 0, 0, false);
+	this.useRadiusFillTweenScaleEnter = game.add.tween(this.useRadiusFill.scale);
+	this.useRadiusFillTweenScaleEnter.to( { x: this.useRadiusScale + useRadiusShrunkScale, y: this.useRadiusScale + useRadiusShrunkScale }, enterTime, Phaser.Easing.Bounce.Out, autoStart, 0, 0, false);
+
+
+	//tweens for leave feedback
+	this.useRadiusFillTweenAlphaLeave = game.add.tween(this.useRadiusFill);
+	this.useRadiusFillTweenAlphaLeave.to( { alpha: 0 }, leaveTime, Phaser.Easing.Linear.Out, autoStart, 0, 0, false);
+	this.useRadiusFillTweenScaleLeave = game.add.tween(this.useRadiusFill.scale);
+	this.useRadiusFillTweenScaleLeave.to( { x: this.useRadiusScale, y: this.useRadiusScale }, leaveTime, Phaser.Easing.Linear.Out, autoStart, 0, 0, false);
+
+	this.useRadiusBorderTweenAlphaLeave = game.add.tween(this.useRadiusBorder);
+	this.useRadiusBorderTweenAlphaLeave.to( { alpha: this.useRadiusStartAlpha }, leaveTime, Phaser.Easing.Linear.Out, autoStart, 0, 0, false);
+	this.useRadiusBorderTweenScaleLeave = game.add.tween(this.useRadiusBorder.scale);
+	this.useRadiusBorderTweenScaleLeave.to( { x: this.useRadiusScale, y: this.useRadiusScale }, leaveTime, Phaser.Easing.Linear.Out, autoStart, 0, 0, false);
+	
+	
+	//adds elements to group
+	this.entityGroup.add(this.entity);
+	this.entityGroup.add(this.useRadiusBorder);
+	
+
+	this.showEnterRadiusFeedback = function()
+	{
+		//bounces the useradius and fill in
+		this.useRadiusBorderTweenAlphaEnter.start();
+		this.useRadiusBorderTweenScaleEnter.start();
+
+		this.useRadiusFillTweenAlphaEnter.start();
+		this.useRadiusFillTweenScaleEnter.start();
+	}
+
+
+
+	this.showLeaveRadiusFeedback = function()
+	{
+		//fades the useradius and fill out
+		// this.useRadiusBorderTweenAlphaLeave.start() - removed because the alpha based on distance looks nicer than linear tween
+		this.useRadiusBorderTweenScaleLeave.start();
+
+		this.useRadiusFillTweenAlphaLeave.start();
+		this.useRadiusFillTweenScaleLeave.start();	
 	}
 
 
 	//keeps local distance to player updated every frame for use by other functions
-	this.updateDistanceToPlayer = function() {
-		this.distanceToPlayer = game.physics.arcade.distanceBetween(GLOBAL_PLAYER, this.interactable);
-	}
-
-
-
-	//maintains the tweening state so other tween functions can run/not run
-	this.updateIsTweeningChecks = function() {
-
-/*		if (this.useRadiusBorderTweenAlphaOut.isRunning || this.useRadiusBorderTweenAlphaIn.isRunning) 
-		{
-			this.isTweening = true;
-		}
-		
-		else
-		{
-			this.isTweening = false;
-		}*/
-
+	this.updateClosestPlayerDistance = function()
+	{
+		this.distanceToPlayer = game.physics.arcade.distanceBetween(GLOBAL_PLAYER, this.entity);
 	}
 
 
 
 
 	//updates feebdack to be correct based on player when called
-	this.updateInRadiusFeedback = function() {
+	this.updateEnterRadiusFeedback = function()
+	{
 
-		//show in radius feedback if player is within range and the useradius is currently not tweening
-		if (!this.isTweening) 
+		//show in radius feedback if f within range and the feedback state is not reflecting this
+		if (this.distanceToPlayer <= this.usableRange && this.feedbackState == "LeaveRadius") 
+		{ 
+			this.feedbackState = "EnterRadius";
+			this.showEnterRadiusFeedback();
+		}
+
+
+		//if not within range and the feedback state isn't reflecting this
+		else if (this.distanceToPlayer >= this.usableRange && this.feedbackState == "EnterRadius")
 		{
-			//if within range and the feedback state is not reflecting this
-			if (this.distanceToPlayer <= this.usableRange && this.feedbackState == "notInRadius") 
-			{
-				this.isTweening = true; 
-				this.feedbackState = "inRadius";
-				// console.log("is tweening equals = " + this.isTweening);
-
-				this.showInRadiusFeedback();
-			}
-
-
-			//if not within range and the feedback state isn't reflecting this
-			else if (this.distanceToPlayer >= this.usableRange && this.feedbackState == "inRadius")
-			{
-				this.isTweening = true; 
-				this.feedbackState = "notInRadius";
-				// console.log("is tweening equals = " + this.isTweening);
-
-				this.showNotInRadiusFeedback();
-			}
-
+			this.feedbackState = "LeaveRadius";
+			this.showLeaveRadiusFeedback();
 		}
 	}
 
@@ -495,29 +468,29 @@ function InteractableObject(type, x, y, scale) {
 
 
 	//updates the alpha on the useradius based on player distance
-	this.updateNearRadiusFeedback = function() {
+	this.updateNearRadiusFeedback = function()
+	{
 
-		if (!this.isTweening) {
+		var intendedAlpha = this.useRadiusStartAlpha - (this.useRadiusStartAlpha * (this.distanceToPlayer / this.useRadiusVisibleRange));
 
-			//if the player isn't inside the radius but is within useRadiusVisibleRange, fade in the useradius border
-			if (this.distanceToPlayer <= this.useRadiusVisibleRange && this.distanceToPlayer >= this.usableRange) 
-			{
-				this.useRadiusDistanceToPlayerAlpha = 0.2 - (0.2 * (this.distanceToPlayer /  this.useRadiusVisibleRange));
-				this.useRadiusBorder.alpha = this.useRadiusDistanceToPlayerAlpha;
-			}
-
-/*			//if player leaves too fast and they're outside of the useRadiusVisibleRange before the exit tween finishes, tween alpha back to correct value 
-			if (this.useRadiusDistanceToPlayerAlpha !== 0 && this.distanceToPlayer >= this.useRadiusVisibleRange)
-			{
-				this.isTweening = true;
-				this.useRadiusBorderTweenAlphaOut.to( { alpha: 1 }, 500, Phaser.Easing.Linear.Out, true, 0, 0, false)
-			}
-*/
+		//stops the alpha value being < 0
+		if (intendedAlpha < 0) 
+		{
+			this.useRadiusDistanceToPlayerAlpha = 0;
 		}
 
+		else 
+		{
+			this.useRadiusDistanceToPlayerAlpha = intendedAlpha;
+		}
+
+		//if the player isn't inside the radius but is within useRadiusVisibleRange, fade in the useradius border
+		if (this.distanceToPlayer >= this.usableRange && !this.useRadiusBorderTweenAlphaLeave.isRunning) 
+		{
+			this.useRadiusBorder.alpha = this.useRadiusDistanceToPlayerAlpha;
+
+		}
 	}
-
-
 };
 
 
