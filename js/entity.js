@@ -1,4 +1,5 @@
 var GLOBAL_ENTITIES_ARRAY = [];
+var GLOBAL_ENTITIES_GROUP = null;
 var ENTITY_DICTIONARY = 
 {
 	light: 
@@ -17,6 +18,9 @@ var ENTITY_DICTIONARY =
 
 function Entity(type, x, y, scale)
 {
+	//adds enttiy to global entities array
+	GLOBAL_ENTITIES_ARRAY[GLOBAL_ENTITIES_ARRAY.length] = this;
+
 
 	//initial variables for creation from function call
 	this.type = type;
@@ -30,6 +34,7 @@ function Entity(type, x, y, scale)
 	this.usableRange = 55;
 	this.useRadiusStartAlpha = 0.35;
 	this.useRadiusVisibleRange = 150;
+	this.sortDepth = 9999999;
 
 
 	//initial values of variables controlled by functions
@@ -57,6 +62,14 @@ function Entity(type, x, y, scale)
 	this.useRadiusFill.alpha = 0;
 
 
+	//adds elements to group
+	//ordering is somewhat important as first one gets drawn first
+	this.entityGroup.add(this.useRadiusFill);
+	this.entityGroup.add(this.useRadiusBorder);
+	this.entityGroup.add(this.entity);
+	GLOBAL_ENTITIES_GROUP.add(this.entityGroup);
+
+
 	//tween local vars
 	var enterTime = 325;
 	var leaveTime = 250;
@@ -65,7 +78,6 @@ function Entity(type, x, y, scale)
 	var leaveVisibleRangeTime = 500;
 	var useRadiusShrunkScale = -0.03;
 
-	
 
 	//tweens for enter feedback
 	this.borderTweenAlphaEnter = game.add.tween(this.useRadiusBorder);
@@ -89,11 +101,7 @@ function Entity(type, x, y, scale)
 	this.borderTweenAlphaLeave.to( { alpha: this.useRadiusStartAlpha }, leaveTime, Phaser.Easing.Linear.Out, autoStart, 0, 0, false);
 	this.borderTweenScaleLeave = game.add.tween(this.useRadiusBorder.scale);
 	this.borderTweenScaleLeave.to( { x: this.useRadiusScale, y: this.useRadiusScale }, leaveTime, Phaser.Easing.Linear.Out, autoStart, 0, 0, false);
-	
-	
-	//adds elements to group
-	this.entityGroup.add(this.entity);
-	this.entityGroup.add(this.useRadiusBorder);
+
 };
 
 
@@ -133,7 +141,6 @@ Entity.prototype.updateClosestPlayerDistance = function()
 //updates feebdack to be correct based on player when called
 Entity.prototype.updateEnterRadiusFeedback = function()
 {
-
 	//show in radius feedback if f within range and the feedback state is not reflecting this
 	if (this.distanceToPlayer <= this.usableRange && this.feedbackState == "LeaveRadius") 
 	{ 
@@ -155,7 +162,6 @@ Entity.prototype.updateEnterRadiusFeedback = function()
 //updates the alpha on the useradius based on player distance
 Entity.prototype.updateNearRadiusFeedback = function()
 {
-
 	var intendedAlpha = this.useRadiusStartAlpha - (this.useRadiusStartAlpha * (this.distanceToPlayer / this.useRadiusVisibleRange));
 
 	//stops the alpha value being < 0

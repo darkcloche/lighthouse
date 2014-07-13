@@ -1,18 +1,5 @@
 /////////////////////////////////////////////////////////////
 
-/*
-TODO 
-
-- add debug text functionality
-
-
-*/
-
-
-
-
-
-
 
 var GameState = function(game)
 {
@@ -43,7 +30,7 @@ GameState.prototype.preload = function()
 	//entity assets
 	this.load.image("useRadiusBorder", "assets/use_radius_border.png");
 	this.load.image("useRadiusFill", "assets/use_radius_fill.png");
-	this.load.image("entityLight", "assets/interactable_light.png");
+	this.load.image("entityLight", "assets/entity_light.png");
 
 	//prompt assets
 	this.load.image("buttonW", "assets/button_w.png");
@@ -85,13 +72,20 @@ GameState.prototype.preload = function()
 
 
 
-
-
+var DEBUG_VAR_1 = "";
+var DEBUG_VAR_2 = "";
 
 
 //called by "new Phaser.Game()"
 GameState.prototype.create = function()
 {
+
+	//debug text
+	var style = { fill: "#FFFFFF" };
+	this.debugText0 = game.add.text(10, this.game.height - 160, "" , style);
+	this.debugText1 = game.add.text(10, this.game.height - 130, "" , style);
+	this.debugText2 = game.add.text(10, this.game.height - 100, "" , style);
+
 
 	//init
 	this.stage.backgroundColor = 0x1E1F1E;
@@ -106,7 +100,7 @@ GameState.prototype.create = function()
 	this.lightBitmap.blendMode = Phaser.blendModes.MULTIPLY;
 
 
-	//capture keyboard input to stop them being used elsewhere
+	//capture Keyboardyboard input to stop them being used elsewhere
 	this.game.input.keyboard.addKeyCapture([
 		Phaser.Keyboard.W,
 		Phaser.Keyboard.A,
@@ -115,21 +109,21 @@ GameState.prototype.create = function()
 	]);
 
 
+	//initial group
+	GLOBAL_LEVEL_GROUP = game.add.group();
+	GLOBAL_PLAYER_GROUP = game.add.group();
+	GLOBAL_ENTITIES_GROUP = game.add.group();
+
+
+	//makes player
+	new Player(100, 100, true, false);
 
 
 	//entities
-	this.createEntity("light", 300, 100, 0.4);
-	// this.createEntity("light", 400, 300, 0.4);	
-	// this.createEntity("light", 600, 150, 0.4);
-	GLOBAL_PLAYER_OBJECT = this.createPlayer(100, 100, true, true);
+	light1 = new Entity("light", 300 , 100, 0.4);
 
 
 };
-
-
-
-
-
 
 
 
@@ -154,28 +148,43 @@ GameState.prototype.create = function()
 
 
 
-//called by "new Phaser.Game()"
+
 GameState.prototype.update = function()
 {
+
+	//debug text
+/*	this.debugText0.text = "Debug Variables";
+	this.debugText1.text = "| " + DEBUG_VAR_1;
+	this.debugText2.text = "| " + DEBUG_VAR_2;*/
+
 
 	//updates movement based on player input
 	GLOBAL_PLAYER_OBJECT.updateMovement();
 
 
 	//updates movement hints around the player if they're enabled
-	if (GLOBAL_PLAYER_OBJECT.hintsEnabled && GLOBAL_PLAYER_OBJECT.hintsRemaining !== 0)
+	//TO REPLACE WHEN HINT OBJECT IS GOOD AND LOVELY
+/*	if (GLOBAL_PLAYER_OBJECT.hintsEnabled && GLOBAL_PLAYER_OBJECT.hintsRemaining !== 0)
 	{
 	 GLOBAL_PLAYER_OBJECT.updateMovementHints();
-	}
+	}*/
 
 
-	//updates every Entity to check correct feedback is being shown
+	//updates feedback state of all entities
 	for (i in GLOBAL_ENTITIES_ARRAY)
 	{
 		GLOBAL_ENTITIES_ARRAY[i].updateClosestPlayerDistance();
 		GLOBAL_ENTITIES_ARRAY[i].updateEnterRadiusFeedback();
 		GLOBAL_ENTITIES_ARRAY[i].updateNearRadiusFeedback();
 	}
+
+
+	//updates state of all hints
+	for (i in GLOBAL_ACTIVE_HINTS_ARRAY)
+	{
+		GLOBAL_ACTIVE_HINTS_ARRAY[i].updateState();
+	}
+
 
 };
 
@@ -206,21 +215,8 @@ GameState.prototype.update = function()
 
 
 
-GameState.prototype.createEntity =  function (type, x, y, useRadiusScale)
-{
-	var entityObject = new Entity(type, x, y, useRadiusScale);
-	GLOBAL_ENTITIES_ARRAY[GLOBAL_ENTITIES_ARRAY.length] = entityObject;
-	return entityObject;a
-};
 
 
-
-//incapsulating in this function now despite being one line so its consistent and has scope for me to add more to later
-GameState.prototype.createPlayer =  function (x, y, hintsEnabled, doFadeInHints)
-{
-	var playerObject = new Player(x, y, hintsEnabled, doFadeInHints);
-	return playerObject;
-};
 
 
 
