@@ -36,7 +36,8 @@ function Player(x, y, startHintsEnabled)
 
 
 	//hints
-	if (startHintsEnabled) {
+	if (startHintsEnabled) 
+	{
 		this.hintsGroup = game.add.group()
 		this.player.addChild(this.hintsGroup);
 
@@ -46,9 +47,6 @@ function Player(x, y, startHintsEnabled)
 		new Hint("d", true, true, this.hintsGroup, hintOffset, 0);
 	}
 
-
-	//bring player to top after everything is created
-	this.player.bringToTop();
 };
 
 

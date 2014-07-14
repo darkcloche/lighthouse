@@ -28,8 +28,8 @@ GameState.prototype.preload = function()
 	this.load.image("player", "assets/player.png");
 
 	//entity assets
-	this.load.image("useRadiusBorder", "assets/use_radius_border.png");
-	this.load.image("useRadiusFill", "assets/use_radius_fill.png");
+	this.load.image("radiusBorder", "assets/use_radius_border.png");
+	this.load.image("radiusFill", "assets/use_radius_fill.png");
 	this.load.image("entityLight", "assets/entity_light.png");
 
 	//prompt assets
@@ -109,10 +109,12 @@ GameState.prototype.create = function()
 	]);
 
 
-	//initial group
+	//initial grouping
 	GLOBAL_LEVEL_GROUP = game.add.group();
-	GLOBAL_PLAYER_GROUP = game.add.group();
-	GLOBAL_ENTITIES_GROUP = game.add.group();
+	GLOBAL_PLAYER_GROUP = game.add.group(GLOBAL_LEVEL_GROUP);
+	GLOBAL_ENTITIES_GROUP = game.add.group(GLOBAL_LEVEL_GROUP);
+	GLOBAL_USERADIUS_GROUP = game.add.group(GLOBAL_LEVEL_GROUP);
+	GLOBAL_HINTS_GROUP = game.add.group(GLOBAL_LEVEL_GROUP);
 
 
 	//makes player
@@ -120,9 +122,11 @@ GameState.prototype.create = function()
 
 
 	//entities
-	light1 = new Entity("light", 300 , 100, 0.4);
-
-
+	light1 = new Entity("light", 300 , 100, true);
+	light2 = new Entity("light", 300 , 150, true);
+	light3 = new Entity("light", 300 , 200, true);
+	light4 = new Entity("light", 300 , 250, true);
+	light5 = new Entity("light", 300 , 300, true);
 };
 
 
@@ -153,29 +157,21 @@ GameState.prototype.update = function()
 {
 
 	//debug text
-/*	this.debugText0.text = "Debug Variables";
+	this.debugText0.text = "Debug Variables";
 	this.debugText1.text = "| " + DEBUG_VAR_1;
-	this.debugText2.text = "| " + DEBUG_VAR_2;*/
+	this.debugText2.text = "| " + DEBUG_VAR_2;
 
 
 	//updates movement based on player input
 	GLOBAL_PLAYER_OBJECT.updateMovement();
 
 
-	//updates movement hints around the player if they're enabled
-	//TO REPLACE WHEN HINT OBJECT IS GOOD AND LOVELY
-/*	if (GLOBAL_PLAYER_OBJECT.hintsEnabled && GLOBAL_PLAYER_OBJECT.hintsRemaining !== 0)
+	//updates feedback state of all useradii
+	for (i in GLOBAL_USERADIUS_ARRAY)
 	{
-	 GLOBAL_PLAYER_OBJECT.updateMovementHints();
-	}*/
-
-
-	//updates feedback state of all entities
-	for (i in GLOBAL_ENTITIES_ARRAY)
-	{
-		GLOBAL_ENTITIES_ARRAY[i].updateClosestPlayerDistance();
-		GLOBAL_ENTITIES_ARRAY[i].updateEnterRadiusFeedback();
-		GLOBAL_ENTITIES_ARRAY[i].updateNearRadiusFeedback();
+		GLOBAL_USERADIUS_ARRAY[i].updateClosestPlayerDistance();
+		GLOBAL_USERADIUS_ARRAY[i].updateEnterRadiusFeedback();
+		GLOBAL_USERADIUS_ARRAY[i].updateNearRadiusFeedback();
 	}
 
 

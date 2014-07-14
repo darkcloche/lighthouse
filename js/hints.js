@@ -1,4 +1,5 @@
 var GLOBAL_ACTIVE_HINTS_ARRAY = [];
+var GLOBAL_HINTS_GROUP = null;
 
 function Hint(buttonType, startEnabled, fadesIn, group, offsetX, offsetY)
 {
@@ -18,6 +19,7 @@ function Hint(buttonType, startEnabled, fadesIn, group, offsetX, offsetY)
 
 	//button sprite
 	this.button = game.add.sprite(group.x + offsetX, group.y + offsetY, "button" + this.buttonType);
+	GLOBAL_HINTS_GROUP.add(this.button);
 	this.button.alpha = 0;
 	this.button.anchor.setTo(0.5, 0.5);	
 	this.button.scale.x = this.button.scale.y = this.buttonScale;
@@ -26,10 +28,12 @@ function Hint(buttonType, startEnabled, fadesIn, group, offsetX, offsetY)
 
 	//gradient sprite
 	this.gradient = game.add.sprite(group.x + offsetX, group.y + offsetY, "buttonGradient");
+	GLOBAL_HINTS_GROUP.add(this.gradient);
 	this.gradient.alpha = 0;
 	this.gradient.anchor.setTo(0.5, 0.5);
 	this.gradient.scale.x = this.gradient.scale.y = this.buttonScale;
 	group.add(this.gradient);
+
 
 
 	//controls initial state
@@ -132,7 +136,7 @@ Hint.prototype.pressed = function()
 		var buttonGradientTweenPressedScale = game.add.tween(this.gradient.scale);
 		buttonGradientTweenPressedScale
 		.to( { x: pressedScale, y: pressedScale }, fadeInTime, Phaser.Easing.Linear.InOut, autoStart, delay, 0, false);
-	}
+	};
 
 	buttonTweenPressedAlpha.start();
 	buttonTweenPressedScale.start();
