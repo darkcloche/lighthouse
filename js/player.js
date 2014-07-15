@@ -3,6 +3,8 @@ var GLOBAL_PLAYER_OBJECT = null;
 var GLOBAL_PLAYER_GROUP = null;
 var GLOBAL_LEVEL_GROUP = null;
 
+var CURRENT_USABLE_ENTITY_OBJECT = false;
+
 
 
 function Player(x, y, startHintsEnabled)
@@ -36,17 +38,20 @@ function Player(x, y, startHintsEnabled)
 
 
 	//hints
+	var hintsGroup = game.add.group()
+	this.player.addChild(hintsGroup);
+
+
 	if (startHintsEnabled) 
 	{
-		this.hintsGroup = game.add.group()
-		this.player.addChild(this.hintsGroup);
-
-		new Hint("w", true, true, this.hintsGroup, 0, -hintOffset);
-		new Hint("a", true, true, this.hintsGroup, -hintOffset, 0);
-		new Hint("s", true, true, this.hintsGroup, -0, hintOffset);
-		new Hint("d", true, true, this.hintsGroup, hintOffset, 0);
+		this.upHint = new Hint("w", true, hintsGroup, 0, -hintOffset);
+		this.leftHint = new Hint("a", true, hintsGroup, -hintOffset, 0);
+		this.downHint = new Hint("s", true, hintsGroup, -0, hintOffset);
+		this.rightHint = new Hint("d", true, hintsGroup, hintOffset, 0);
 	}
 
+	//"E" use hint for interactive entities
+	this.usePrompt = new Hint("e", false, hintsGroup, 0, -hintOffset, this.doPickUpEntity);
 };
 
 
@@ -69,8 +74,19 @@ Player.prototype.inputIsActive = function(button)
 
 
 
+//checks if supplied button name is currently pressed down
+Player.prototype.doPickUpEntity = function()
+{
+	//uses global vars because its called in the context of the Hint object
 
+	var pickedEntityGroup = game.add.group()
+	GLOBAL_PLAYER.addChild(pickedEntityGroup);
 
+	pickedEntityGroup.add(CURRENT_USABLE_ENTITY_OBJECT.entity);
+	CURRENT_USABLE_ENTITY_OBJECT.useRadius.showUsedFeedback();
+	CURRENT_USABLE_ENTITY_OBJECT.doPickUpFeedback();
+	CURRENT_PICKED_ENTITY_OBJECT = this;
+};
 
 
 Player.prototype.updateMovement = function() {
@@ -81,25 +97,20 @@ Player.prototype.updateMovement = function() {
 		this.player.body.acceleration.y = -this.playerAcceleration;
 	}
 
-
 	if (this.inputIsActive("S")) 
 	{
 		this.player.body.acceleration.y = this.playerAcceleration;
 	}
-
 
 	if (this.inputIsActive("A")) 
 	{
 		this.player.body.acceleration.x = -this.playerAcceleration;
 	}
 
-
 	if (this.inputIsActive("D")) 
 	{
 		this.player.body.acceleration.x = this.playerAcceleration;
 	}
-
-
 
 	//if no keys are not held down or opposite keys are held down, reset acceleration
 	if ((!this.inputIsActive("W") && !this.inputIsActive("S")) || (this.inputIsActive("W") && this.inputIsActive("S")))
@@ -111,8 +122,17 @@ Player.prototype.updateMovement = function() {
 	{
 		this.player.body.acceleration.x = 0;
 	}
-
 }
 
 
 
+Player.prototype.updateUseHint = function() 
+{
+	if (CURRENT_USABLE_ENTITY_OBJECT !== false && !this.usePrompt.isVisible) {
+		this.usePrompt.unHide(false);
+	}
+
+	if (CURRENT_USABLE_ENTITY_OBJECT == false && this.usePrompt.isVisible) {
+		this.usePrompt.hide(false);
+	}
+}

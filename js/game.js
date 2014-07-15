@@ -123,10 +123,6 @@ GameState.prototype.create = function()
 
 	//entities
 	light1 = new Entity("light", 300 , 100, true);
-	light2 = new Entity("light", 300 , 150, true);
-	light3 = new Entity("light", 300 , 200, true);
-	light4 = new Entity("light", 300 , 250, true);
-	light5 = new Entity("light", 300 , 300, true);
 };
 
 
@@ -161,10 +157,12 @@ GameState.prototype.update = function()
 	this.debugText1.text = "| " + DEBUG_VAR_1;
 	this.debugText2.text = "| " + DEBUG_VAR_2;
 
+	DEBUG_VAR_1 = light1.entity.alpha;
+	DEBUG_VAR_2 = "";
 
 	//updates movement based on player input
 	GLOBAL_PLAYER_OBJECT.updateMovement();
-
+	GLOBAL_PLAYER_OBJECT.updateUseHint();
 
 	//updates feedback state of all useradii
 	for (i in GLOBAL_USERADIUS_ARRAY)
@@ -174,13 +172,11 @@ GameState.prototype.update = function()
 		GLOBAL_USERADIUS_ARRAY[i].updateNearRadiusFeedback();
 	}
 
-
 	//updates state of all hints
 	for (i in GLOBAL_ACTIVE_HINTS_ARRAY)
 	{
-		GLOBAL_ACTIVE_HINTS_ARRAY[i].updateState();
+		GLOBAL_ACTIVE_HINTS_ARRAY[i].updatePressedState();
 	}
-
 
 };
 
