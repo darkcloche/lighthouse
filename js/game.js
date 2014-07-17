@@ -31,6 +31,7 @@ GameState.prototype.preload = function()
 	this.load.image("radiusBorder", "assets/use_radius_border.png");
 	this.load.image("radiusFill", "assets/use_radius_fill.png");
 	this.load.image("entityLight", "assets/entity_light.png");
+	this.load.image("entityParentDummy", "assets/entity_parent_dummy.png");
 
 	//prompt assets
 	this.load.image("buttonW", "assets/button_w.png");
@@ -71,9 +72,11 @@ GameState.prototype.preload = function()
 
 
 
-
+//this just creates them, DO NOT MODIFY THEM HERE
 var DEBUG_VAR_1 = "";
 var DEBUG_VAR_2 = "";
+var DEBUG_VAR_3 = "";
+var DEBUG_VAR_4 = "";
 
 
 //called by "new Phaser.Game()"
@@ -85,11 +88,13 @@ GameState.prototype.create = function()
 	this.debugText0 = game.add.text(10, this.game.height - 160, "" , style);
 	this.debugText1 = game.add.text(10, this.game.height - 130, "" , style);
 	this.debugText2 = game.add.text(10, this.game.height - 100, "" , style);
+	this.debugText3 = game.add.text(10, this.game.height - 70, "" , style);
+	this.debugText4 = game.add.text(10, this.game.height - 40, "" , style);
 
 
 	//init
 	this.stage.backgroundColor = 0x1E1F1E;
-	this.physics.startSystem(Phaser.Physics.ARCADE);
+	game.physics.startSystem(Phaser.Physics.ARCADE);
 
 
 	//light bitmap setup (unsure how this shit works, am scared by it)
@@ -110,19 +115,20 @@ GameState.prototype.create = function()
 
 
 	//initial grouping
-	GLOBAL_LEVEL_GROUP = game.add.group();
-	GLOBAL_PLAYER_GROUP = game.add.group(GLOBAL_LEVEL_GROUP);
-	GLOBAL_ENTITIES_GROUP = game.add.group(GLOBAL_LEVEL_GROUP);
-	GLOBAL_USERADIUS_GROUP = game.add.group(GLOBAL_LEVEL_GROUP);
-	GLOBAL_HINTS_GROUP = game.add.group(GLOBAL_LEVEL_GROUP);
+	LEVEL_GROUP = game.add.group();
+	PLAYER_GROUP = game.add.group(LEVEL_GROUP);
+	ENTITIES_GROUP = game.add.group(LEVEL_GROUP);
+	USERADIUS_GROUP = game.add.group(LEVEL_GROUP);
+	HINTS_GROUP = game.add.group(LEVEL_GROUP);
 
 
 	//makes player
-	new Player(100, 100, true, false);
+	PLAYER_OBJECT = new Player(100, 100, true, false);
+	PLAYER = PLAYER_OBJECT.player;
 
 
 	//entities
-	light1 = new Entity("light", 300 , 100, true);
+	light1 = new Entity("light", 100, 200, true);
 };
 
 
@@ -147,8 +153,6 @@ GameState.prototype.create = function()
 */
 
 
-
-
 GameState.prototype.update = function()
 {
 
@@ -156,28 +160,41 @@ GameState.prototype.update = function()
 	this.debugText0.text = "Debug Variables";
 	this.debugText1.text = "| " + DEBUG_VAR_1;
 	this.debugText2.text = "| " + DEBUG_VAR_2;
+	this.debugText3.text = "| " + DEBUG_VAR_3;
+	this.debugText4.text = "| " + DEBUG_VAR_4;
 
-	DEBUG_VAR_1 = light1.entity.alpha;
-	DEBUG_VAR_2 = "";
+	DEBUG_VAR_1 = CURRENT_USABLE_ENTITY_OBJECT;
+	DEBUG_VAR_2 = light1.useRadius.distanceToPlayer;
+	DEBUG_VAR_3 = "";
+	DEBUG_VAR_4 = "";
 
-	//updates movement based on player input
-	GLOBAL_PLAYER_OBJECT.updateMovement();
-	GLOBAL_PLAYER_OBJECT.updateUseHint();
+
+	//updates movement
+	PLAYER_OBJECT.updateMovement();
+
+
+	//updates collision of entities with player
+	for (i in ENTITIES_ARRAY) {
+		ENTITIES_ARRAY[i].updateCollision();
+	}
+
+
 
 	//updates feedback state of all useradii
-	for (i in GLOBAL_USERADIUS_ARRAY)
+	for (i in USERADIUS_ARRAY)
 	{
-		GLOBAL_USERADIUS_ARRAY[i].updateClosestPlayerDistance();
-		GLOBAL_USERADIUS_ARRAY[i].updateEnterRadiusFeedback();
-		GLOBAL_USERADIUS_ARRAY[i].updateNearRadiusFeedback();
+		USERADIUS_ARRAY[i].updateClosestPlayerDistance();
+		USERADIUS_ARRAY[i].updateEnterRadiusFeedback();
+		USERADIUS_ARRAY[i].updateNearRadiusFeedback();
 	}
 
 	//updates state of all hints
-	for (i in GLOBAL_ACTIVE_HINTS_ARRAY)
+	for (i in ACTIVE_HINTS_ARRAY)
 	{
-		GLOBAL_ACTIVE_HINTS_ARRAY[i].updatePressedState();
+		ACTIVE_HINTS_ARRAY[i].updatePressedState();
 	}
 
+	
 };
 
 
@@ -194,12 +211,6 @@ GameState.prototype.update = function()
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /*
-  ______   _    _   _   _    _____   _______   _____    ____    _   _    _____ 
- |  ____| | |  | | | \ | |  / ____| |__   __| |_   _|  / __ \  | \ | |  / ____|
- | |__    | |  | | |  \| | | |         | |      | |   | |  | | |  \| | | (___  
- |  __|   | |  | | | . ` | | |         | |      | |   | |  | | | . ` |  \___ \ 
- | |      | |__| | | |\  | | |____     | |     _| |_  | |__| | | |\  |  ____) |
- |_|       \____/  |_| \_|  \_____|    |_|    |_____|  \____/  |_| \_| |_____/ 
                                                                       
 */
 

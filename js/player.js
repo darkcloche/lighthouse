@@ -1,9 +1,7 @@
-var GLOBAL_PLAYER = null;
-var GLOBAL_PLAYER_OBJECT = null;
-var GLOBAL_PLAYER_GROUP = null;
-var GLOBAL_LEVEL_GROUP = null;
-
-var CURRENT_USABLE_ENTITY_OBJECT = false;
+var PLAYER = null;
+var PLAYER_OBJECT = null;
+var PLAYER_GROUP = null;
+var LEVEL_GROUP = null;
 
 
 
@@ -14,28 +12,28 @@ function Player(x, y, startHintsEnabled)
 
 	var playerMaxSpeed = 150;
 	var playerDrag = 1250;
-	var playerScale = 1.2;
-	var hintOffset = 35;
+	var playerScale = 1;
+	var hintOffset = 45;
+
+	//init state of some vars
+	this.pickedEntity = null;
 
 
 	//loads sprite
 	this.player = game.add.sprite(x, y, "player");
 	this.player.anchor.setTo(0.5, 0.5);
-	this.player.scale.x = this.player.scale.y = playerScale;
-	GLOBAL_PLAYER = this.player;
-	GLOBAL_PLAYER_OBJECT = this;
 
 
 	//enables phys and applies values
 	game.physics.enable(this.player, Phaser.Physics.ARCADE);
+	game.physics.arcade.enableBody(this.player);
+	this.player.body.collideWorldBounds = true;
 	this.player.body.maxVelocity.setTo(playerMaxSpeed, playerMaxSpeed);
 	this.player.body.drag.setTo(playerDrag, playerDrag);
 
-
 	//group setup
-	this.player.addChild(GLOBAL_PLAYER_GROUP);
-	GLOBAL_LEVEL_GROUP.add(GLOBAL_PLAYER_GROUP); 
-
+	this.player.addChild(PLAYER_GROUP);
+	LEVEL_GROUP.add(PLAYER_GROUP); 
 
 	//hints
 	var hintsGroup = game.add.group()
@@ -77,15 +75,20 @@ Player.prototype.inputIsActive = function(button)
 //checks if supplied button name is currently pressed down
 Player.prototype.doPickUpEntity = function()
 {
-	//uses global vars because its called in the context of the Hint object
+	// uses global vars because its called in the context of the Hint object
+	this.pickedEntity = CURRENT_USABLE_ENTITY_OBJECT;
+	CURRENT_PICKED_ENTITY_OBJECT = CURRENT_USABLE_ENTITY_OBJECT;
 
-	var pickedEntityGroup = game.add.group()
-	GLOBAL_PLAYER.addChild(pickedEntityGroup);
+	//parents entity to player
+	var offsetX = this.pickedEntity.entity.x - PLAYER.x;
+	var offsetY = this.pickedEntity.entity.y - PLAYER.y;
+	PLAYER.addChild(this.pickedEntity.entity);
+	this.pickedEntity.entity.x = offsetX;
+	this.pickedEntity.entity.y = offsetY;
 
-	pickedEntityGroup.add(CURRENT_USABLE_ENTITY_OBJECT.entity);
-	CURRENT_USABLE_ENTITY_OBJECT.useRadius.showUsedFeedback();
-	CURRENT_USABLE_ENTITY_OBJECT.doPickUpFeedback();
-	CURRENT_PICKED_ENTITY_OBJECT = this;
+	// updates entity feedback
+	this.pickedEntity.doPickUpFeedback();
+	this.pickedEntity.useRadius.showUsedFeedback();
 };
 
 
@@ -121,18 +124,5 @@ Player.prototype.updateMovement = function() {
 	if ((!this.inputIsActive("A") && !this.inputIsActive("D")) || (this.inputIsActive("A") && this.inputIsActive("D")))
 	{
 		this.player.body.acceleration.x = 0;
-	}
-}
-
-
-
-Player.prototype.updateUseHint = function() 
-{
-	if (CURRENT_USABLE_ENTITY_OBJECT !== false && !this.usePrompt.isVisible) {
-		this.usePrompt.unHide(false);
-	}
-
-	if (CURRENT_USABLE_ENTITY_OBJECT == false && this.usePrompt.isVisible) {
-		this.usePrompt.hide(false);
 	}
 }
