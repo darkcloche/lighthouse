@@ -52,6 +52,7 @@ function Entity(type, x, y, usable)
 		this.useRadiusGroup = game.add.group()
 		this.entityParentDummy.addChild(this.useRadiusGroup);
 		this.useRadius = new UseRadius(this);
+		this.usePrompt = new Hint("e", false, this.useRadiusGroup, 0, -35, PLAYER_OBJECT.doPickUpEntity);
 	};
 };
 
@@ -59,7 +60,8 @@ function Entity(type, x, y, usable)
 
 Entity.prototype.updateCollision = function() 
 {
-	if (CURRENT_PICKED_ENTITY_OBJECT !== this) {
+	if (CURRENT_PICKED_ENTITY_OBJECT !== this) //removes collision on picked objects
+	{
 		game.physics.arcade.collide(PLAYER, this.entityParentDummy);
 	}
 }

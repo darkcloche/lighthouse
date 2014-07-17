@@ -63,7 +63,7 @@ UseRadius.prototype.showEnterRadiusFeedback = function()
 
 		fillTweenScale.onStart.add(function() 
 		{
-			PLAYER_OBJECT.usePrompt.unHide();
+			this.entityParentObject.usePrompt.unHide();
 			this.entityParentObject.startCanPickUpFeedback();
 		}, this);
 
@@ -105,7 +105,7 @@ UseRadius.prototype.showLeaveRadiusFeedback = function()
 
 		fillTweenScale.onStart.add(function() 
 		{
-			PLAYER_OBJECT.usePrompt.hide();
+			this.entityParentObject.usePrompt.hide();
 			this.entityParentObject.stopCanPickUpFeedback();
 		}, this);
 
@@ -343,8 +343,7 @@ Hint.prototype.hide = function()
 
 Hint.prototype.unHide = function(isRandomlyDelayed) 
 {
-	//gets to it to only call once
-	if (this.buttonTweenUnHide == undefined) 
+	if (this.buttonTweenUnHide == undefined)
 	{
 		var fadeInTime = 300;
 		var fadeToAlpha = 0.6;
@@ -376,7 +375,7 @@ Hint.prototype.unHide = function(isRandomlyDelayed)
 
 Hint.prototype.pressed = function() 
 {
-	if (tweenPressedAlpha == undefined) //gets to it to only call once
+	if (this.tweenPressedAlpha == undefined)
 	{
 		var autoStart = false;
 		var delay = 0;
@@ -386,20 +385,21 @@ Hint.prototype.pressed = function()
 		var pressedScale = this.buttonScale + 0.2;
 		var gradientFadeOutTime = 300;
 		var gradientAlpha = 0.4;
-		var tweenPressedAlpha = game.add.tween(this.button);
-		var tweenPressedScale = game.add.tween(this.button.scale);
-		var gradientTweenPressedAlpha = game.add.tween(this.gradient);
-		var gradientTweenPressedScale = game.add.tween(this.gradient.scale);	
 
-		tweenPressedAlpha.to( { alpha: fadeToAlpha }, fadeInTime, Phaser.Easing.Linear.InOut, autoStart, delay, 0, false);
-		tweenPressedAlpha.to( { alpha: 0 }, fadeOutTime, Phaser.Easing.Quadratic.InOut, autoStart, delay, 0, false);
-		tweenPressedScale.to( { x: pressedScale, y: pressedScale }, fadeInTime, Phaser.Easing.Linear.InOut, autoStart, delay, 0, false);
+		this.tweenPressedAlpha = game.add.tween(this.button);
+		this.tweenPressedScale = game.add.tween(this.button.scale);
+		this.gradientTweenPressedAlpha = game.add.tween(this.gradient);
+		this.gradientTweenPressedScale = game.add.tween(this.gradient.scale);	
 
-		gradientTweenPressedAlpha.to( { alpha: gradientAlpha }, fadeInTime, Phaser.Easing.Linear.InOut, autoStart, delay, 0, false);
-		gradientTweenPressedAlpha.to( { alpha: 0 }, gradientFadeOutTime, Phaser.Easing.Quadratic.InOut, autoStart, delay, 0, false);
-		gradientTweenPressedScale.to( { x: pressedScale, y: pressedScale }, fadeInTime, Phaser.Easing.Linear.InOut, autoStart, delay, 0, false);
+		this.tweenPressedAlpha.to( { alpha: fadeToAlpha }, fadeInTime, Phaser.Easing.Linear.InOut, autoStart, delay, 0, false);
+		this.tweenPressedAlpha.to( { alpha: 0 }, fadeOutTime, Phaser.Easing.Quadratic.InOut, autoStart, delay, 0, false);
+		this.tweenPressedScale.to( { x: pressedScale, y: pressedScale }, fadeInTime, Phaser.Easing.Linear.InOut, autoStart, delay, 0, false);
 
-		gradientTweenPressedScale.onStart.add(function() 
+		this.gradientTweenPressedAlpha.to( { alpha: gradientAlpha }, fadeInTime, Phaser.Easing.Linear.InOut, autoStart, delay, 0, false);
+		this.gradientTweenPressedAlpha.to( { alpha: 0 }, gradientFadeOutTime, Phaser.Easing.Quadratic.InOut, autoStart, delay, 0, false);
+		this.gradientTweenPressedScale.to( { x: pressedScale, y: pressedScale }, fadeInTime, Phaser.Easing.Linear.InOut, autoStart, delay, 0, false);
+
+		this.gradientTweenPressedScale.onStart.add(function() 
 		{	
 			if (this.callback == PLAYER_OBJECT.doPickUpEntity)
 			{
@@ -407,16 +407,16 @@ Hint.prototype.pressed = function()
 			}
 		}, this);
 
-		gradientTweenPressedScale.onComplete.add(function() 
+		this.gradientTweenPressedScale.onComplete.add(function() 
 		{
 			this.isVisible = false;
 		}, this);
 	}
 
 	this.buttonTweenUnHide.stop();
-	tweenPressedAlpha.start();
-	tweenPressedScale.start();
-	gradientTweenPressedAlpha.start();
-	gradientTweenPressedScale.start();
+	this.tweenPressedAlpha.start();
+	this.tweenPressedScale.start();
+	this.gradientTweenPressedAlpha.start();
+	this.	gradientTweenPressedScale.start();
 	return true;
 }

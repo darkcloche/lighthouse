@@ -47,9 +47,6 @@ function Player(x, y, startHintsEnabled)
 		this.downHint = new Hint("s", true, hintsGroup, -0, hintOffset);
 		this.rightHint = new Hint("d", true, hintsGroup, hintOffset, 0);
 	}
-
-	//"E" use hint for interactive entities
-	this.usePrompt = new Hint("e", false, hintsGroup, 0, -hintOffset, this.doPickUpEntity);
 };
 
 
