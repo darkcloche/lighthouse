@@ -52,7 +52,7 @@ function Entity(type, x, y, usable)
 		this.useRadiusGroup = game.add.group()
 		this.entityParentDummy.addChild(this.useRadiusGroup);
 		this.useRadius = new UseRadius(this);
-		this.usePrompt = new Hint("e", false, this.useRadiusGroup, 0, -35, PLAYER_OBJECT.doPickUpEntity);
+		this.usePrompt = new Hint("e", false, this.useRadiusGroup, 0, -35, this, PLAYER_OBJECT.doPickUpEntity);
 	};
 };
 

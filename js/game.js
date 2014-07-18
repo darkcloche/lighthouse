@@ -123,8 +123,8 @@ GameState.prototype.create = function()
 
 
 	//makes player
-	PLAYER_OBJECT = new Player(100, 100, true, false);
-	PLAYER = PLAYER_OBJECT.player;
+	new Player(100, 100, true, false);
+	
 
 
 	//entities
@@ -164,7 +164,7 @@ GameState.prototype.update = function()
 	this.debugText4.text = "| " + DEBUG_VAR_4;
 
 	DEBUG_VAR_1 = CURRENT_USABLE_ENTITY_OBJECT;
-	DEBUG_VAR_2 = light1.useRadius.distanceToPlayer;
+	DEBUG_VAR_2 = light1.usePrompt.isChangingOffset;
 	DEBUG_VAR_3 = "";
 	DEBUG_VAR_4 = "";
 
@@ -192,6 +192,7 @@ GameState.prototype.update = function()
 	for (i in ACTIVE_HINTS_ARRAY)
 	{
 		ACTIVE_HINTS_ARRAY[i].updatePressedState();
+		ACTIVE_HINTS_ARRAY[i].updateOffset();
 	}
 
 	
@@ -201,27 +202,10 @@ GameState.prototype.update = function()
 
 
 
-
-
-
-
-
-
-
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /*
                                                                       
 */
-
-
-
-
-
-
-
-
-
 
 
 

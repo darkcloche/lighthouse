@@ -18,11 +18,13 @@ function Player(x, y, startHintsEnabled)
 	//init state of some vars
 	this.pickedEntity = null;
 
-
 	//loads sprite
 	this.player = game.add.sprite(x, y, "player");
 	this.player.anchor.setTo(0.5, 0.5);
 
+	//sets global vars
+	PLAYER_OBJECT = this;
+	PLAYER = this.player;
 
 	//enables phys and applies values
 	game.physics.enable(this.player, Phaser.Physics.ARCADE);
@@ -42,10 +44,10 @@ function Player(x, y, startHintsEnabled)
 
 	if (startHintsEnabled) 
 	{
-		this.upHint = new Hint("w", true, hintsGroup, 0, -hintOffset);
-		this.leftHint = new Hint("a", true, hintsGroup, -hintOffset, 0);
-		this.downHint = new Hint("s", true, hintsGroup, -0, hintOffset);
-		this.rightHint = new Hint("d", true, hintsGroup, hintOffset, 0);
+		this.upHint = new Hint("w", true, hintsGroup, 0, -hintOffset, PLAYER_OBJECT);
+		this.leftHint = new Hint("a", true, hintsGroup, -hintOffset, 0, PLAYER_OBJECT);
+		this.downHint = new Hint("s", true, hintsGroup, -0, hintOffset, PLAYER_OBJECT);
+		this.rightHint = new Hint("d", true, hintsGroup, hintOffset, 0, PLAYER_OBJECT);
 	}
 };
 

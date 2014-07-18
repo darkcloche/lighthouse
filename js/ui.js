@@ -257,15 +257,22 @@ UseRadius.prototype.updateNearRadiusFeedback = function()
 var ACTIVE_HINTS_ARRAY = [];
 var HINTS_GROUP = null;
 
-function Hint(buttonType, startEnabled, group, offsetX, offsetY, callback)
+function Hint(buttonType, startEnabled, group, offsetX, offsetY, entityParentObject, callback)
 {
-
 	//tweakable vars
 	this.buttonScale = 1;
+	this.offsetDirection = 1;
 
 
 	//adds enttiy to global entities array
 	ACTIVE_HINTS_ARRAY[ACTIVE_HINTS_ARRAY.length] = this;
+
+
+	//member vars set by constructor params
+	this.entityParentObject = entityParentObject;
+	this.group = group;
+	this.offsetX = offsetX;
+	this.offsetY = offsetY;
 
 
 	//init state of some vars
@@ -273,6 +280,7 @@ function Hint(buttonType, startEnabled, group, offsetX, offsetY, callback)
 	this.hasBeenPressed = false;
 	this.buttonType = buttonType.toUpperCase();
 	this.callback = callback;
+	this.isChangingOffset = false;
 
 
 	//button sprite
@@ -293,11 +301,37 @@ function Hint(buttonType, startEnabled, group, offsetX, offsetY, callback)
 	group.add(this.gradient);
 
 
-	//controls initial state
+	//different creation outcomes based on params
+	if (this.callback == PLAYER_OBJECT.doPickUpEntity)
+	{
+		this.isAttachedToEntity = true;
+	}
+
 	if (startEnabled)
 	{
 		this.unHide(true);
 	}
+
+}
+
+
+//TODO
+//this is still basically outputting every frame and it makes me sad. fix it
+
+Hint.prototype.updateOffset = function() 
+{
+	if (this.isAttachedToEntity && this.isVisible && !this.isChangingOffset) 
+	{
+		if (PLAYER.y < this.entityParentObject.entity.y && !this.isChangingOffset)
+		{
+			this.moveHintOffsetDown();
+		}
+
+		else if (PLAYER.y > this.entityParentObject.entity.y && !this.isChangingOffset)
+		{
+			this.moveHintOffsetUp();
+		}
+	}		
 }
 
 
@@ -375,7 +409,7 @@ Hint.prototype.unHide = function(isRandomlyDelayed)
 
 Hint.prototype.pressed = function() 
 {
-	if (this.tweenPressedAlpha == undefined)
+	if (this.buttonTweenPressedAlpha == undefined)
 	{
 		var autoStart = false;
 		var delay = 0;
@@ -386,14 +420,14 @@ Hint.prototype.pressed = function()
 		var gradientFadeOutTime = 300;
 		var gradientAlpha = 0.4;
 
-		this.tweenPressedAlpha = game.add.tween(this.button);
-		this.tweenPressedScale = game.add.tween(this.button.scale);
+		this.buttonTweenPressedAlpha = game.add.tween(this.button);
+		this.buttonTweenPressedScale = game.add.tween(this.button.scale);
 		this.gradientTweenPressedAlpha = game.add.tween(this.gradient);
 		this.gradientTweenPressedScale = game.add.tween(this.gradient.scale);	
 
-		this.tweenPressedAlpha.to( { alpha: fadeToAlpha }, fadeInTime, Phaser.Easing.Linear.InOut, autoStart, delay, 0, false);
-		this.tweenPressedAlpha.to( { alpha: 0 }, fadeOutTime, Phaser.Easing.Quadratic.InOut, autoStart, delay, 0, false);
-		this.tweenPressedScale.to( { x: pressedScale, y: pressedScale }, fadeInTime, Phaser.Easing.Linear.InOut, autoStart, delay, 0, false);
+		this.buttonTweenPressedAlpha.to( { alpha: fadeToAlpha }, fadeInTime, Phaser.Easing.Linear.InOut, autoStart, delay, 0, false);
+		this.buttonTweenPressedAlpha.to( { alpha: 0 }, fadeOutTime, Phaser.Easing.Quadratic.InOut, autoStart, delay, 0, false);
+		this.buttonTweenPressedScale.to( { x: pressedScale, y: pressedScale }, fadeInTime, Phaser.Easing.Linear.InOut, autoStart, delay, 0, false);
 
 		this.gradientTweenPressedAlpha.to( { alpha: gradientAlpha }, fadeInTime, Phaser.Easing.Linear.InOut, autoStart, delay, 0, false);
 		this.gradientTweenPressedAlpha.to( { alpha: 0 }, gradientFadeOutTime, Phaser.Easing.Quadratic.InOut, autoStart, delay, 0, false);
@@ -401,7 +435,7 @@ Hint.prototype.pressed = function()
 
 		this.gradientTweenPressedScale.onStart.add(function() 
 		{	
-			if (this.callback == PLAYER_OBJECT.doPickUpEntity)
+			if (this.isAttachedToEntity)
 			{
 				this.callback();
 			}
@@ -414,9 +448,76 @@ Hint.prototype.pressed = function()
 	}
 
 	this.buttonTweenUnHide.stop();
-	this.tweenPressedAlpha.start();
-	this.tweenPressedScale.start();
+	this.buttonTweenPressedAlpha.start();
+	this.buttonTweenPressedScale.start();
 	this.gradientTweenPressedAlpha.start();
-	this.	gradientTweenPressedScale.start();
+	this.gradientTweenPressedScale.start();
 	return true;
+}
+
+
+
+
+Hint.prototype.moveHintOffsetDown = function() 
+{
+	if (this.tweenMoveOffsetDown == undefined)
+	{
+		var autoStart = false;
+		var time = 300;
+		var delay = 0;
+		var posY = this.group.y - this.offsetY;
+
+		this.buttonTweenMoveOffsetDown = game.add.tween(this.button);
+		this.gradientTweenMoveOffsetDown = game.add.tween(this.gradient);
+
+		this.buttonTweenMoveOffsetDown.to( { y: posY }, time, Phaser.Easing.Quadratic.InOut, autoStart, delay, 0, false);
+		this.gradientTweenMoveOffsetDown.to( { y: posY }, time, Phaser.Easing.Quadratic.InOut, autoStart, delay, 0, false);
+
+		this.gradientTweenMoveOffsetDown.onStart.add(function() 
+		{	
+			this.isChangingOffset = true;
+		}, this);
+		
+		this.gradientTweenMoveOffsetDown.onComplete.add(function() 
+		{	
+			this.isChangingOffset = false;
+		}, this);
+	}
+
+	this.buttonTweenMoveOffsetDown.start();
+	this.gradientTweenMoveOffsetDown.start();
+}
+
+
+
+Hint.prototype.moveHintOffsetUp = function() 
+{
+	if (this.tweenMoveOffsetDownUp == undefined)
+	{
+		var autoStart = false;
+		var time = 300;
+		var delay = 0;
+		var posY = this.group.y + this.offsetY;
+
+		this.buttonTweenMoveOffsetDownUp = game.add.tween(this.button);
+		this.gradientTweenMoveOffsetDownUp = game.add.tween(this.gradient);
+
+		this.buttonTweenMoveOffsetDownUp.to( { y: posY }, time, Phaser.Easing.Quadratic.InOut, autoStart, delay, 0, false);
+		this.gradientTweenMoveOffsetDownUp.to( { y: posY }, time, Phaser.Easing.Quadratic.InOut, autoStart, delay, 0, false);
+
+		this.gradientTweenMoveOffsetDownUp.onStart.add(function() 
+		{	
+			this.isChangingOffset = true;
+		}, this);
+
+		this.gradientTweenMoveOffsetDownUp.onComplete.add(function() 
+		{	
+			this.isChangingOffset = false;
+		}, this);
+
+
+	}
+
+	this.buttonTweenMoveOffsetDownUp.start();
+	this.gradientTweenMoveOffsetDownUp.start();
 }
