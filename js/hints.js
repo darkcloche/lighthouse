@@ -1,64 +1,146 @@
-var GLOBAL_ACTIVE_HINTS_ARRAY = [];
-var GLOBAL_HINTS_GROUP = null;
+var ACTIVE_HINTS_ARRAY = [];
+var HINTS_GROUP = null;
 
-function Hint(buttonType, startEnabled, fadesIn, group, offsetX, offsetY)
+function Hint(buttonType, startEnabled, group, offsetX, offsetY, entityParentObject, callback)
 {
-
 	//tweakable vars
-	this.buttonScale = 0.8;
+	this.buttonScale = 1;
+
 
 	//adds enttiy to global entities array
-	GLOBAL_ACTIVE_HINTS_ARRAY[GLOBAL_ACTIVE_HINTS_ARRAY.length] = this;
+	ACTIVE_HINTS_ARRAY[ACTIVE_HINTS_ARRAY.length] = this;
+
+
+	//member vars set by constructor params
+	this.entityParentObject = entityParentObject;
+	this.group = group;
+	this.offsetX = offsetX;
+	this.offsetY = offsetY;
 
 
 	//init state of some vars
-	this.isVisible = false;
+	this.isVisible = false; //is true when it is at all visible (during tweens included)
 	this.hasBeenPressed = false;
 	this.buttonType = buttonType.toUpperCase();
+	this.callback = callback;
+	this.offsetDirection = 1;
 
 
 	//button sprite
 	this.button = game.add.sprite(group.x + offsetX, group.y + offsetY, "button" + this.buttonType);
-	GLOBAL_HINTS_GROUP.add(this.button);
 	this.button.alpha = 0;
 	this.button.anchor.setTo(0.5, 0.5);	
 	this.button.scale.x = this.button.scale.y = this.buttonScale;
+	HINTS_GROUP.add(this.button);
 	group.add(this.button);
 
 
 	//gradient sprite
 	this.gradient = game.add.sprite(group.x + offsetX, group.y + offsetY, "buttonGradient");
-	GLOBAL_HINTS_GROUP.add(this.gradient);
 	this.gradient.alpha = 0;
 	this.gradient.anchor.setTo(0.5, 0.5);
 	this.gradient.scale.x = this.gradient.scale.y = this.buttonScale;
+	HINTS_GROUP.add(this.gradient);
 	group.add(this.gradient);
 
 
-
-	//controls initial state
-	if (startEnabled)
+	//different creation outcomes based on params
+	if (this.callback == PLAYER_OBJECT.doPickUpEntity)
 	{
-		if (fadesIn) {
-			this.button.alpha = 0;
-			this.unHide(true);
-		}
-
-		else 
-		{
-			this.button.alpha = 1;
-			this.isVisible = true;
-		}
+		this.isAttachedToEntity = true;
 	}
 
-};
+	if (startEnabled)
+	{
+		this.unHide(true);
+	}
+
+}
+
+
+
+Hint.prototype.updateOffset = function() 
+{
+	if (this.isAttachedToEntity) 
+	{
+		if (!this.isVisible) //this updates the offset direction that the hint should be at so when the hint enables, it shifts to the correct pos
+		{
+			if (PLAYER.y < this.entityParentObject.entity.y) 
+			{
+				this.offsetDirection = 0;
+			}
+
+			else
+			{
+				this.offsetDirection = 1;
+			}
+		}
+
+		if (this.isVisible && CURRENT_USABLE_ENTITY_OBJECT != false)
+		{
+			if (PLAYER.y < this.entityParentObject.entity.y && this.offsetDirection == 0)
+			{
+				this.offsetDirection = 1;
+				this.moveHintOffsetDown();
+			}
+
+			if (PLAYER.y > this.entityParentObject.entity.y && this.offsetDirection == 1)
+			{
+				this.offsetDirection = 0;
+				this.moveHintOffsetUp();
+			}
+		}
+	}	
+}
+
+
+
+Hint.prototype.updatePressedState = function() 
+{
+	if (PLAYER_OBJECT.inputIsActive(this.buttonType) && !this.hasBeenPressed && this.isVisible) 
+	{
+		this.pressed();
+		this.hasBeenPressed = true;
+	}
+}
+
+
+
+Hint.prototype.hide = function() 
+{
+	//gets to it to only call once
+	if (this.buttonTweenHide == undefined) 
+	{
+		var fadeOutTime = 200;
+		var autoStart = false;
+		var delay = 0;
+
+		this.buttonTweenHide = game.add.tween(this.button);
+		this.buttonTweenHide.to( { alpha: 0 }, fadeOutTime, Phaser.Easing.Quadratic.InOut, autoStart, delay, 0, false);
+
+		this.buttonTweenHide.onStart.add(function() 
+		{
+
+		}, this);
+
+		this.buttonTweenHide.onComplete.add(function() 
+		{
+			this.isVisible = false;
+			if (!this.buttonTweenUnHide.isRunning) 
+			{
+				CURRENT_USABLE_ENTITY_OBJECT = false;
+			}
+		}, this);
+	}
+
+	this.buttonTweenHide.start();
+}
 
 
 
 Hint.prototype.unHide = function(isRandomlyDelayed) 
 {
-
-	if (buttonTweenUnHide == undefined) //gets to it to only call once
+	if (this.buttonTweenUnHide == undefined)
 	{
 		var fadeInTime = 300;
 		var fadeToAlpha = 0.6;
@@ -67,41 +149,31 @@ Hint.prototype.unHide = function(isRandomlyDelayed)
 
 		if (isRandomlyDelayed) {
 			delay = game.rnd.integerInRange(100, 250);
-		};
+		}
 
-		var buttonTweenUnHide = game.add.tween(this.button);
-		buttonTweenUnHide
-		.to( { alpha: fadeToAlpha }, fadeInTime, Phaser.Easing.Quadratic.InOut, autoStart, delay, 0, false)
-		.onComplete.add(function() {this.isVisible = true;}, this);
+		this.buttonTweenUnHide = game.add.tween(this.button)
+		this.buttonTweenUnHide.to( { alpha: fadeToAlpha }, fadeInTime, Phaser.Easing.Linear.InOut, autoStart, delay, 0, false);
+
+		this.buttonTweenUnHide.onStart.add(function() 
+		{
+			this.isVisible = true;
+			CURRENT_USABLE_ENTITY_OBJECT = this.entityParentObject;
+		}, this);
+
+		this.buttonTweenUnHide.onComplete.add(function() 
+		{
+
+		}, this);
 	}
 
-	buttonTweenUnHide.start();
-};
-
-
-
-Hint.prototype.hide = function() 
-{
-	if (this.buttonTweenHide == undefined) //gets to it to only call once
-	{
-		var fadeOutTime = 250;
-		var autoStart = false;
-		var delay = 0;
-
-		var buttonTweenHide = game.add.tween(this.button);
-		buttonTweenHide
-		.to( { alpha: 0 }, fadeOutTime, Phaser.Easing.Quadratic.InOut, autoStart, delay, 0, false)
-		.onComplete.add(function() {this.isVisible = false;}, this);
-	}
-
-	buttonTweenHide.start();
-};
+	this.buttonTweenUnHide.start();
+}
 
 
 
 Hint.prototype.pressed = function() 
 {
-	if (buttonTweenPressedAlpha == undefined) //gets to it to only call once
+	if (this.buttonTweenPressedAlpha == undefined)
 	{
 		var autoStart = false;
 		var delay = 0;
@@ -112,66 +184,83 @@ Hint.prototype.pressed = function()
 		var gradientFadeOutTime = 300;
 		var gradientAlpha = 0.4;
 
+		this.buttonTweenPressedAlpha = game.add.tween(this.button);
+		this.buttonTweenPressedScale = game.add.tween(this.button.scale);
+		this.gradientTweenPressedAlpha = game.add.tween(this.gradient);
+		this.gradientTweenPressedScale = game.add.tween(this.gradient.scale);	
 
-		var buttonTweenPressedAlpha = game.add.tween(this.button);
-		buttonTweenPressedAlpha
-		.to( { alpha: fadeToAlpha }, fadeInTime, Phaser.Easing.Linear.InOut, autoStart, delay, 0, false)
-		.to( { alpha: 0 }, fadeOutTime, Phaser.Easing.Quadratic.InOut, autoStart, delay, 0, false)
-		.onComplete.add(function() 
+		this.buttonTweenPressedAlpha.to( { alpha: fadeToAlpha }, fadeInTime, Phaser.Easing.Linear.InOut, autoStart, delay, 0, false);
+		this.buttonTweenPressedAlpha.to( { alpha: 0 }, fadeOutTime, Phaser.Easing.Quadratic.InOut, autoStart, delay, 0, false);
+		this.buttonTweenPressedScale.to( { x: pressedScale, y: pressedScale }, fadeInTime, Phaser.Easing.Linear.InOut, autoStart, delay, 0, false);
+
+		this.gradientTweenPressedAlpha.to( { alpha: gradientAlpha }, fadeInTime, Phaser.Easing.Linear.InOut, autoStart, delay, 0, false);
+		this.gradientTweenPressedAlpha.to( { alpha: 0 }, gradientFadeOutTime, Phaser.Easing.Quadratic.InOut, autoStart, delay, 0, false);
+		this.gradientTweenPressedScale.to( { x: pressedScale, y: pressedScale }, fadeInTime, Phaser.Easing.Linear.InOut, autoStart, delay, 0, false);
+
+		this.gradientTweenPressedScale.onStart.add(function() 
+		{	
+			if (this.isAttachedToEntity)
 			{
-				this.isVisible = false;
-				this.hasBeenPressed = true;
-			}, this);
+				this.callback();
+				CURRENT_USABLE_ENTITY_OBJECT = false;
+			}
+		}, this);
 
-		var buttonTweenPressedScale = game.add.tween(this.button.scale);
-		buttonTweenPressedScale
-		.to( { x: pressedScale, y: pressedScale }, fadeInTime, Phaser.Easing.Linear.InOut, autoStart, delay, 0, false);
-
-		var buttonGradientTweenPressedAlpha = game.add.tween(this.gradient);
-		buttonGradientTweenPressedAlpha
-		.to( { alpha: gradientAlpha }, fadeInTime, Phaser.Easing.Linear.InOut, autoStart, delay, 0, false)
-		.to( { alpha: 0 }, gradientFadeOutTime, Phaser.Easing.Quadratic.InOut, autoStart, delay, 0, false);
-
-
-		var buttonGradientTweenPressedScale = game.add.tween(this.gradient.scale);
-		buttonGradientTweenPressedScale
-		.to( { x: pressedScale, y: pressedScale }, fadeInTime, Phaser.Easing.Linear.InOut, autoStart, delay, 0, false);
-	};
-
-	buttonTweenPressedAlpha.start();
-	buttonTweenPressedScale.start();
-	buttonGradientTweenPressedAlpha.start();
-	buttonGradientTweenPressedScale.start();
-};
-
-
-
-
-Hint.prototype.updateState = function() 
-{
-	if (GLOBAL_PLAYER_OBJECT.inputIsActive(this.buttonType) && !this.hasBeenPressed && this.isVisible)  //add something involving a timeout to clean this up
-	{
-		this.hasBeenPressed = true;
-		this.pressed();
+		this.gradientTweenPressedScale.onComplete.add(function() 
+		{
+			this.isVisible = false;
+		}, this);
 	}
-};
+
+	this.buttonTweenUnHide.stop();
+	this.buttonTweenPressedAlpha.start();
+	this.buttonTweenPressedScale.start();
+	this.gradientTweenPressedAlpha.start();
+	this.gradientTweenPressedScale.start();
+	return true;
+}
 
 
 
 
-	
+Hint.prototype.moveHintOffsetDown = function() 
+{
+	if (this.tweenMoveOffsetDown == undefined)
+	{
+		var autoStart = false;
+		var time = 300;
+		var delay = 0;
+		var posY = this.group.y - this.offsetY;
+
+		this.buttonTweenMoveOffsetDown = game.add.tween(this.button);
+		this.gradientTweenMoveOffsetDown = game.add.tween(this.gradient);
+
+		this.buttonTweenMoveOffsetDown.to( { y: posY }, time, Phaser.Easing.Quadratic.InOut, autoStart, delay, 0, false);
+		this.gradientTweenMoveOffsetDown.to( { y: posY }, time, Phaser.Easing.Quadratic.InOut, autoStart, delay, 0, false);
+	}
+
+	this.buttonTweenMoveOffsetDown.start();
+	this.gradientTweenMoveOffsetDown.start();
+}
 
 
 
+Hint.prototype.moveHintOffsetUp = function() 
+{
+	if (this.tweenMoveOffsetDownUp == undefined)
+	{
+		var autoStart = false;
+		var time = 300;
+		var delay = 0;
+		var posY = this.group.y + this.offsetY;
 
+		this.buttonTweenMoveOffsetDownUp = game.add.tween(this.button);
+		this.gradientTweenMoveOffsetDownUp = game.add.tween(this.gradient);
 
+		this.buttonTweenMoveOffsetDownUp.to( { y: posY }, time, Phaser.Easing.Quadratic.InOut, autoStart, delay, 0, false);
+		this.gradientTweenMoveOffsetDownUp.to( { y: posY }, time, Phaser.Easing.Quadratic.InOut, autoStart, delay, 0, false);
+	}
 
-
-
-
-
-
-
-
-
-
+	this.buttonTweenMoveOffsetDownUp.start();
+	this.gradientTweenMoveOffsetDownUp.start();
+}

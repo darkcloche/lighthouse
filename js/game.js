@@ -163,8 +163,8 @@ GameState.prototype.update = function()
 	this.debugText3.text = "| " + DEBUG_VAR_3;
 	this.debugText4.text = "| " + DEBUG_VAR_4;
 
-	DEBUG_VAR_1 = CURRENT_USABLE_ENTITY_OBJECT;
-	DEBUG_VAR_2 = light1.usePrompt.isChangingOffset;
+	DEBUG_VAR_1 = "";
+	DEBUG_VAR_2 = "";
 	DEBUG_VAR_3 = "";
 	DEBUG_VAR_4 = "";
 
