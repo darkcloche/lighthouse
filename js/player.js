@@ -53,44 +53,6 @@ function Player(x, y, startHintsEnabled)
 
 
 
-
-//checks if supplied button name is currently pressed down
-Player.prototype.inputIsActive = function(button)
-{
-	var isActive = false;
-	button = button.toUpperCase();
-
-	//takes the button passed in to the function and checks if it"s pressed
-	if (button !== undefined) 
-	{
-		isActive = game.input.keyboard.isDown(Phaser.Keyboard[button.toString()]);
-	}
-	
-	return isActive;
-};
-
-
-
-//checks if supplied button name is currently pressed down
-Player.prototype.doPickUpEntity = function()
-{
-	// uses global vars because its called in the context of the Hint object
-	this.pickedEntity = CURRENT_USABLE_ENTITY_OBJECT;
-	CURRENT_PICKED_ENTITY_OBJECT = CURRENT_USABLE_ENTITY_OBJECT;
-
-	//parents entity to player
-	var offsetX = this.pickedEntity.entity.x - PLAYER.x;
-	var offsetY = this.pickedEntity.entity.y - PLAYER.y;
-	PLAYER.addChild(this.pickedEntity.entity);
-	this.pickedEntity.entity.x = offsetX;
-	this.pickedEntity.entity.y = offsetY;
-
-	// updates entity feedback
-	this.pickedEntity.doPickUpFeedback();
-	this.pickedEntity.useRadius.showUsedFeedback();
-};
-
-
 Player.prototype.updateMovement = function() {
 
 	//applies acceleration in the required direction when key is pressed, and updates hint
@@ -124,4 +86,56 @@ Player.prototype.updateMovement = function() {
 	{
 		this.player.body.acceleration.x = 0;
 	}
+}
+
+
+
+//checks if supplied button name is currently pressed down
+Player.prototype.inputIsActive = function(button)
+{
+	var isActive = false;
+	button = button.toUpperCase();
+
+	//takes the button passed in to the function and checks if it"s pressed
+	if (button !== undefined) 
+	{
+		isActive = game.input.keyboard.isDown(Phaser.Keyboard[button.toString()]);
+	}
+	
+	return isActive;
+}
+
+
+
+//checks if supplied button name is currently pressed down
+Player.prototype.doPickUpEntity = function(object)
+{
+	// updates entity feedback, enables ability to drop
+	this.pickedEntity = object;
+	
+	this.pickedEntity.isPicked = true;
+	this.pickedEntity.startPickedUpFeedback();
+	this.pickedEntity.useRadius.showUsedFeedback();
+}
+
+
+
+//checks if supplied button name is currently pressed down
+Player.prototype.doDropEntity = function()
+{
+	// updates entity feedback, re-enables ability to pick up
+	this.pickedEntity.isPicked = false;
+	this.pickedEntity.stopPickedUpFeedback();
+	this.pickedEntity.useRadius.showDroppedFeedback();
+
+	this.pickedEntity = false;
+}
+
+
+
+//checks if supplied button name is currently pressed down
+Player.prototype.onObjectPickedUp = function()
+{
+	this.pickedEntity.usePromptDrop.forceUpdateOffset();
+	this.pickedEntity.usePromptDrop.unHide();
 }

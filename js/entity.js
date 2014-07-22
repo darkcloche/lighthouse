@@ -1,6 +1,5 @@
 var ENTITIES_ARRAY = [];
 var ENTITIES_GROUP = null;
-var CURRENT_PICKED_ENTITY_OBJECT = null;
 var CURRENT_USABLE_ENTITY_OBJECT = null;
 var ENTITY_DICTIONARY = 
 {
@@ -21,38 +20,38 @@ function Entity(type, x, y, usable)
 	//adds entity to global entities array
 	ENTITIES_ARRAY[ENTITIES_ARRAY.length] = this;
 
+
 	//initial variables for creation from function call
 	this.type = type;
 	this.entityInfo = ENTITY_DICTIONARY[this.type];
 
-	//dummy invisible sprite because rotating the main entity when it was parent caused relative position maths to go crazy)
-	this.entityParentDummy = game.add.sprite(x, y, "entityParentDummy");
-	this.entityParentDummy.anchor.setTo(0.5, 0.5);
-	game.physics.enable(this.entityParentDummy, Phaser.Physics.ARCADE);
-	game.physics.arcade.enableBody(this.entityParentDummy);
-	game.physics.arcade.collide(PLAYER, this.entityParentDummy);
-	this.entityParentDummy.body.collideWorldBounds = true;
-	this.entityParentDummy.body.immovable = true;
 
 	//adds relevant entity type depending on object "type"
 	this.entity = game.add.sprite(x, y, this.entityInfo.textureName);
+	ENTITIES_GROUP.add(this.entity); //groups (used for depth sorting in game.js) - has to happen before parented to dummy as it does physical parenting too
 	this.entity.anchor.setTo(0.5, 0.5);
 	game.physics.enable(this.entity, Phaser.Physics.ARCADE);
-	game.physics.arcade.enableBody(this.entityParentDummy);
-	this.entity.body.angularDrag = 200; //angular params for the rotation effect when you enter useradius
+	game.physics.arcade.enableBody(this.entity);
+	this.entity.body.angularDrag = 200; //angular params for the rotation effect when you enter useradius (currently using tween but keeping around in case)
 	this.entity.body.maxAngular = 50;
-	this.entityParentDummy.addChild(this.entity);
+	this.entity.body.collideWorldBounds = true;
+	this.entity.body.immovable = true;
 
-	//groups (used for depth sorting in game.js)
-	ENTITIES_GROUP.add(this.entity);
 
-	//useradius
-	if (usable) 
+	//initial state of vars
+	this.isPicked = false;
+	this.isUsable = usable;
+
+
+	//if entity is usable, add UI
+	if (this.isUsable) 
 	{
-		this.useRadiusGroup = game.add.group()
-		this.entityParentDummy.addChild(this.useRadiusGroup);
+		this.usableUIGroup = game.add.group()
+		this.usableUIGroup.x = x;
+		this.usableUIGroup.y = y;
 		this.useRadius = new UseRadius(this);
-		this.usePrompt = new Hint("e", false, this.useRadiusGroup, 0, -35, this, PLAYER_OBJECT.doPickUpEntity);
+		this.usePromptPickUp = new Hint("e", false, this.usableUIGroup, 0, -35, this, "PickUp");
+		this.usePromptDrop = new Hint("e", false, this.usableUIGroup, 0, -35, this, "Drop");
 	};
 };
 
@@ -60,9 +59,20 @@ function Entity(type, x, y, usable)
 
 Entity.prototype.updateCollision = function() 
 {
-	if (CURRENT_PICKED_ENTITY_OBJECT !== this) //removes collision on picked objects
+	if (PLAYER_OBJECT.pickedEntity !== this) //removes collision on picked objects
 	{
-		game.physics.arcade.collide(PLAYER, this.entityParentDummy);
+		game.physics.arcade.collide(PLAYER, this.entity);
+	}
+}
+
+
+
+Entity.prototype.updatePickedOffsetPosition = function() 
+{
+	if (this.isPicked) 
+	{
+		this.entity.x = this.usableUIGroup.x = PLAYER.x - this.pickedOffsetX;
+		this.entity.y = this.usableUIGroup.y = PLAYER.y - this.pickedOffsetY;
 	}
 }
 
@@ -70,21 +80,40 @@ Entity.prototype.updateCollision = function()
 
 Entity.prototype.startCanPickUpFeedback = function() 
 {
-	this.entity.body.angularAcceleration = 300;
+
+	var time = 500;
+	var autoStart = false;
+	var angle = 10;
+
+	//this works strangely (i assume because of the loop behaviour) every other tween required only initialising .to's once but this wants them every time
+
+	this.entityTweenRotate = game.add.tween(this.entity);
+	
+	this.entityTweenRotate.to( { angle: angle }, time, Phaser.Easing.Linear.InOut, autoStart, 0, 0, false);
+	this.entityTweenRotate.to( { angle: -angle }, time, Phaser.Easing.Linear.InOut, autoStart, 0, 0, false);
+	this.entityTweenRotate.loop();
+
+	this.entityTweenRotate.start();
+
+	// this.entity.body.angularAcceleration = 300;
+	// went for a looping tween for now instead of constant rotation
 }
 
 
 
 Entity.prototype.stopCanPickUpFeedback = function() 
 {
-	this.entity.body.angularAcceleration = 0;
+	this.entityTweenRotate.pause();
+
+	// this.entity.body.angularAcceleration = 0;
+	// went for a looping tween for now instead of constant rotation
 }
 
 
 
-Entity.prototype.doPickUpFeedback = function() 
+Entity.prototype.startPickedUpFeedback = function() 
 {
-	if (entityTweenAlpha == undefined) {
+	if (this.entityTweenAlpha == undefined) {
 
 		var time = 500;
 		var autoStart = false;
@@ -93,22 +122,48 @@ Entity.prototype.doPickUpFeedback = function()
 		var scaleStart = 0.85;
 		var scaleEnd = 1;
 
-		var entityTweenAlpha = game.add.tween(this.entity);
-		var entityTweenScale = game.add.tween(this.entity.scale);
+		this.pickedEntityTweenAlpha = game.add.tween(this.entity);
+		this.pickedEntityTweenScale = game.add.tween(this.entity.scale);
 		
-		entityTweenAlpha.to( { alpha: alphaStart }, time, Phaser.Easing.Linear.Out, autoStart, 0, 0, false);
-		entityTweenAlpha.to( { alpha: alphaEnd }, time, Phaser.Easing.Linear.Out, autoStart, 0, 0, false);
-		entityTweenAlpha.loop();
-		entityTweenScale.to( { x: scaleStart, y: scaleStart }, time, Phaser.Easing.Linear.Out, autoStart, 0, 0, false);
-		entityTweenScale.to( { x: scaleEnd, y: scaleEnd }, time, Phaser.Easing.Linear.Out, autoStart, 0, 0, false);
-		entityTweenScale.loop();
+		this.pickedEntityTweenAlpha.to( { alpha: alphaStart }, time, Phaser.Easing.Linear.Out, autoStart, 0, 0, false);
+		this.pickedEntityTweenAlpha.to( { alpha: alphaEnd }, time, Phaser.Easing.Linear.Out, autoStart, 0, 0, false);
+		this.pickedEntityTweenAlpha.loop();
+		this.pickedEntityTweenScale.to( { x: scaleStart, y: scaleStart }, time, Phaser.Easing.Linear.Out, autoStart, 0, 0, false);
+		this.pickedEntityTweenScale.to( { x: scaleEnd, y: scaleEnd }, time, Phaser.Easing.Linear.Out, autoStart, 0, 0, false);
+		this.pickedEntityTweenScale.loop();
 	}
 
-	entityTweenAlpha.start();
-	entityTweenScale.start();
+	this.pickedOffsetX = PLAYER.x - this.entity.x;
+	this.pickedOffsetY = PLAYER.y - this.entity.y;
+
+	this.pickedEntityTweenAlpha.start();
+	this.pickedEntityTweenScale.start();
 }
 
 
+
+Entity.prototype.stopPickedUpFeedback = function() 
+{
+	if (this.droppedEntityTweenAlpha == undefined) {
+
+		var time = 500;
+		var autoStart = false;
+		var alpha = 1;
+		var scale = 1;
+
+		this.droppedEntityTweenAlpha = game.add.tween(this.entity);
+		this.droppedEntityTweenScale = game.add.tween(this.entity.scale);
+		
+		this.droppedEntityTweenAlpha.to( { alpha: alpha }, time, Phaser.Easing.Bounce.Out, autoStart, 0, 0, false);
+		this.droppedEntityTweenScale.to( { x: scale, y: scale }, time, Phaser.Easing.Bounce.Out, autoStart, 0, 0, false);
+	}
+
+	this.pickedEntityTweenAlpha.pause();
+	this.pickedEntityTweenScale.pause();
+
+	this.droppedEntityTweenAlpha.start();
+	this.droppedEntityTweenScale.start();
+}
 
 
 

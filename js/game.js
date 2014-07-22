@@ -31,7 +31,6 @@ GameState.prototype.preload = function()
 	this.load.image("radiusBorder", "assets/use_radius_border.png");
 	this.load.image("radiusFill", "assets/use_radius_fill.png");
 	this.load.image("entityLight", "assets/entity_light.png");
-	this.load.image("entityParentDummy", "assets/entity_parent_dummy.png");
 
 	//prompt assets
 	this.load.image("buttonW", "assets/button_w.png");
@@ -129,6 +128,7 @@ GameState.prototype.create = function()
 
 	//entities
 	light1 = new Entity("light", 100, 200, true);
+
 };
 
 
@@ -163,21 +163,21 @@ GameState.prototype.update = function()
 	this.debugText3.text = "| " + DEBUG_VAR_3;
 	this.debugText4.text = "| " + DEBUG_VAR_4;
 
-	DEBUG_VAR_1 = "";
-	DEBUG_VAR_2 = "";
-	DEBUG_VAR_3 = "";
-	DEBUG_VAR_4 = "";
+	// DEBUG_VAR_1 = "";
+	// DEBUG_VAR_2 = "";
+	// DEBUG_VAR_3 = "";
+	// DEBUG_VAR_4 = "";
 
 
 	//updates movement
 	PLAYER_OBJECT.updateMovement();
 
 
-	//updates collision of entities with player
+	//updates collision of entities with player, updates positions of any picked entities
 	for (i in ENTITIES_ARRAY) {
 		ENTITIES_ARRAY[i].updateCollision();
+		ENTITIES_ARRAY[i].updatePickedOffsetPosition();
 	}
-
 
 
 	//updates feedback state of all useradii
@@ -187,6 +187,7 @@ GameState.prototype.update = function()
 		USERADIUS_ARRAY[i].updateEnterRadiusFeedback();
 		USERADIUS_ARRAY[i].updateNearRadiusFeedback();
 	}
+
 
 	//updates state of all hints
 	for (i in ACTIVE_HINTS_ARRAY)

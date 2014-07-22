@@ -10,7 +10,7 @@ function UseRadius(entityParentObject) {
 	//member vars set by constructor
 	this.entityParent = entityParentObject.entity;
 	this.entityParentObject = entityParentObject;
-	this.group = entityParentObject.useRadiusGroup;
+	this.group = entityParentObject.usableUIGroup;
 
 
 	//object tweakable parameters
@@ -42,148 +42,10 @@ function UseRadius(entityParentObject) {
 
 
 
-UseRadius.prototype.showEnterRadiusFeedback = function()
-{
-	if (borderTweenAlpha == undefined) {
-
-		var time = 325;
-		var autoStart = false;
-		var shrunkScale = 0.95;
-		var borderAlpha = 0.6;
-		var fillAlpha = 0.3;
-
-		var borderTweenAlpha = game.add.tween(this.radiusBorder);
-		var borderTweenScale = game.add.tween(this.radiusBorder.scale);
-		var fillTweenAlpha = game.add.tween(this.radiusFill);
-		var fillTweenScale = game.add.tween(this.radiusFill.scale);
-
-		borderTweenAlpha.to( { alpha: borderAlpha }, time, Phaser.Easing.Quadratic.InOut, autoStart, 0, 0, false);
-		borderTweenScale.to( { x: shrunkScale, y: shrunkScale }, time, Phaser.Easing.Bounce.Out, autoStart, 0, 0, false)
-		fillTweenAlpha.to( { alpha: fillAlpha }, time, Phaser.Easing.Quadratic.InOut, autoStart, 0, 0, false);
-		fillTweenScale.to( { x: shrunkScale, y: shrunkScale }, time, Phaser.Easing.Bounce.Out, autoStart, 0, 0, false);
-
-		fillTweenScale.onStart.add(function() 
-		{
-			this.entityParentObject.usePrompt.unHide();
-			this.entityParentObject.startCanPickUpFeedback();
-		}, this);
-
-		fillTweenScale.onComplete.add(function() 
-		{
-
-		}, this);
-
-	};
-
-	borderTweenAlpha.start();
-	borderTweenScale.start();
-
-	fillTweenAlpha.start();
-	fillTweenScale.start();
-}
-
-
-
-UseRadius.prototype.showLeaveRadiusFeedback = function()
-{
-	if (borderTweenAlpha == undefined) {
-
-		var time = 250;
-		var autoStart = false;
-		var scale = 1;
-		
-		var borderTweenAlpha = game.add.tween(this.radiusBorder);
-		var borderTweenScale = game.add.tween(this.radiusBorder.scale);
-		var fillTweenAlpha = game.add.tween(this.radiusFill);
-		var fillTweenScale = game.add.tween(this.radiusFill.scale);
-
-		// borderTweenAlpha.to( { alpha: this.inRangeAlpha }, time, Phaser.Easing.Linear.Out, autoStart, 0, 0, false);
-		borderTweenScale.to( { x: scale, y: scale }, time, Phaser.Easing.Linear.Out, autoStart, 0, 0, false);
-		fillTweenAlpha.to( { alpha: 0 }, time, Phaser.Easing.Linear.Out, autoStart, 0, 0, false);
-		fillTweenScale.to( { x: scale, y: scale }, time, Phaser.Easing.Linear.Out, autoStart, 0, 0, false);
-
-		fillTweenScale.onStart.add(function() 
-		{
-			this.entityParentObject.usePrompt.hide();
-			this.entityParentObject.stopCanPickUpFeedback();
-		}, this);
-
-		fillTweenScale.onComplete.add(function() 
-		{
-
-		}, this);
-	};
-
-	//this.borderTweenAlpha.start() - removed because the alpha based on distance looks nicer than linear tween
-	borderTweenScale.start();
-
-	fillTweenAlpha.start();
-	fillTweenScale.start();	
-}
-
-
-
-UseRadius.prototype.showUsedFeedback = function()
-{
-
-	if (borderTweenAlpha == undefined) {
-
-		var moveTime = 250;
-		var scaleTime = 375;
-		var autoStart = false; 
-		var playerX = PLAYER.x; 
-		var playerY = PLAYER.y;
-		var posOffsetX = -this.entityParent.x;	//don't like that i'm doing these offsets but couldn't see better solution
-		var posOffsetY = -this.entityParent.y;
-		var endScale = 0;
-		var endAlpha = 0;
-
-		var borderTweenAlpha = game.add.tween(this.radiusBorder);
-		var borderTweenScale = game.add.tween(this.radiusBorder.scale);
-		var borderTweenPos = game.add.tween(this.radiusBorder);
-
-		var fillTweenAlpha = game.add.tween(this.radiusFill);
-		var fillTweenScale = game.add.tween(this.radiusFill.scale);
-		var fillTweenPos = game.add.tween(this.radiusFill);
-
-		borderTweenAlpha.to( { alpha: endAlpha }, scaleTime, Phaser.Easing.Quadratic.Out, autoStart, 0, 0, false);
-		borderTweenScale.to( { x: endScale, y: endScale }, scaleTime, Phaser.Easing.Quadratic.Out, autoStart, 0, 0, false);
-		borderTweenPos.to( { x: posOffsetX, y: posOffsetY }, moveTime, Phaser.Easing.Quadratic.Out, autoStart, 0, 0, false);
-
-		fillTweenAlpha.to( { alpha: endAlpha }, scaleTime, Phaser.Easing.Quadratic.Out, autoStart, 0, 0, false);
-		fillTweenScale.to( { x: endScale, y: endScale }, scaleTime, Phaser.Easing.Quadratic.Out, autoStart, 0, 0, false);
-		fillTweenPos.to( { x: posOffsetX, y: posOffsetY }, moveTime, Phaser.Easing.Quadratic.Out, autoStart, 0, 0, false);
-
-		fillTweenPos.onStart.add(function() 
-		{
-			this.isActive = false;
-			this.entityParentObject.stopCanPickUpFeedback();
-		}, this);
-
-		fillTweenPos.onComplete.add(function() 
-		{
-
-		}, this);
-	};
-
-	this.isActive = false;
-
-	borderTweenAlpha.start();
-	borderTweenScale.start();
-	borderTweenPos.start();
-
-	fillTweenAlpha.start();
-	fillTweenScale.start();
-	fillTweenPos.start();
-
-}
-
-
-
 //keeps local distance to player updated every frame for use by other functions
 UseRadius.prototype.updateClosestPlayerDistance = function()
 {
-	this.distanceToPlayer = game.physics.arcade.distanceBetween(PLAYER, this.entityParent);
+	this.distanceToPlayer = game.physics.arcade.distanceBetween(PLAYER, this.entityParentObject.entity);
 }
 
 
@@ -229,4 +91,188 @@ UseRadius.prototype.updateNearRadiusFeedback = function()
 			this.radiusBorder.alpha = this.distanceToPlayerAlpha;
 		}
 	}
+}
+
+
+
+UseRadius.prototype.showEnterRadiusFeedback = function()
+{
+	if (tweenBorderAlpha == undefined) 
+	{
+		var time = 325;
+		var autoStart = false;
+		var shrunkScale = 0.95;
+		var borderAlpha = 0.6;
+		var fillAlpha = 0.3;
+
+		var tweenBorderAlpha = game.add.tween(this.radiusBorder);
+		var tweenBorderScale = game.add.tween(this.radiusBorder.scale);
+		var tweenFillAlpha = game.add.tween(this.radiusFill);
+		var tweenFillScale = game.add.tween(this.radiusFill.scale);
+
+		tweenBorderAlpha.to( { alpha: borderAlpha }, time, Phaser.Easing.Quadratic.InOut, autoStart, 0, 0, false);
+		tweenBorderScale.to( { x: shrunkScale, y: shrunkScale }, time, Phaser.Easing.Bounce.Out, autoStart, 0, 0, false)
+		tweenFillAlpha.to( { alpha: fillAlpha }, time, Phaser.Easing.Quadratic.InOut, autoStart, 0, 0, false);
+		tweenFillScale.to( { x: shrunkScale, y: shrunkScale }, time, Phaser.Easing.Bounce.Out, autoStart, 0, 0, false);
+
+		tweenFillScale.onStart.add(function() 
+		{
+			this.entityParentObject.usePromptPickUp.unHide();
+			this.entityParentObject.startCanPickUpFeedback();
+		}, this);
+
+		tweenFillScale.onComplete.add(function() 
+		{
+
+		}, this);
+
+	};
+
+	tweenBorderAlpha.start();
+	tweenBorderScale.start();
+
+	tweenFillAlpha.start();
+	tweenFillScale.start();
+}
+
+
+
+UseRadius.prototype.showLeaveRadiusFeedback = function()
+{
+	if (tweenBorderAlpha == undefined) 
+	{
+		var time = 250;
+		var autoStart = false;
+		var scale = 1;
+		
+		var tweenBorderAlpha = game.add.tween(this.radiusBorder);
+		var tweenBorderScale = game.add.tween(this.radiusBorder.scale);
+		var tweenFillAlpha = game.add.tween(this.radiusFill);
+		var tweenFillScale = game.add.tween(this.radiusFill.scale);
+
+		// tweenBorderAlpha.to( { alpha: this.inRangeAlpha }, time, Phaser.Easing.Linear.Out, autoStart, 0, 0, false);
+		tweenBorderScale.to( { x: scale, y: scale }, time, Phaser.Easing.Linear.Out, autoStart, 0, 0, false);
+		tweenFillAlpha.to( { alpha: 0 }, time, Phaser.Easing.Linear.Out, autoStart, 0, 0, false);
+		tweenFillScale.to( { x: scale, y: scale }, time, Phaser.Easing.Linear.Out, autoStart, 0, 0, false);
+
+		tweenFillScale.onStart.add(function() 
+		{
+			this.entityParentObject.usePromptPickUp.hide();
+			this.entityParentObject.stopCanPickUpFeedback();
+		}, this);
+
+		tweenFillScale.onComplete.add(function() 
+		{
+
+		}, this);
+	};
+
+	//this.tweenBorderAlpha.start() - removed because the alpha based on distance looks nicer than linear tween
+	tweenBorderScale.start();
+
+	tweenFillAlpha.start();
+	tweenFillScale.start();	
+}
+
+
+
+UseRadius.prototype.showUsedFeedback = function()
+{
+
+	if (tweenBorderAlpha == undefined) 
+	{
+		var moveTime = 250;
+		var scaleTime = 375;
+		var autoStart = false; 
+		var playerX = PLAYER.x; 
+		var playerY = PLAYER.y;
+		var posOffsetX = this.entityParentObject.pickedOffsetX;
+		var posOffsetY = this.entityParentObject.pickedOffsetY;
+
+		var endScale = 0;
+		var endAlpha = 0;
+
+		var tweenBorderAlpha = game.add.tween(this.radiusBorder);
+		var tweenBorderScale = game.add.tween(this.radiusBorder.scale);
+
+		var tweenFillAlpha = game.add.tween(this.radiusFill);
+		var tweenFillScale = game.add.tween(this.radiusFill.scale);
+
+		var tweenGroupPos = game.add.tween(this.group);
+
+		tweenBorderAlpha.to( { alpha: endAlpha }, scaleTime, Phaser.Easing.Quadratic.Out, autoStart, 0, 0, false);
+		tweenBorderScale.to( { x: endScale, y: endScale }, scaleTime, Phaser.Easing.Quadratic.Out, autoStart, 0, 0, false);
+
+		tweenFillAlpha.to( { alpha: endAlpha }, scaleTime, Phaser.Easing.Quadratic.Out, autoStart, 0, 0, false);
+		tweenFillScale.to( { x: endScale, y: endScale }, scaleTime, Phaser.Easing.Quadratic.Out, autoStart, 0, 0, false);
+
+		tweenGroupPos.to( { x: posOffsetX, y: posOffsetY }, moveTime, Phaser.Easing.Quadratic.Out, autoStart, 0, 0, false);
+		tweenGroupPos.onStart.add(function() 
+		{
+			this.isActive = false;
+			this.entityParentObject.stopCanPickUpFeedback();
+		}, this);
+
+		tweenGroupPos.onComplete.add(function() 
+		{
+
+		}, this);
+	};
+
+	this.isActive = false;
+
+	tweenBorderAlpha.start();
+	tweenBorderScale.start();
+
+	tweenFillAlpha.start();
+	tweenFillScale.start();
+
+	tweenGroupPos.start();
+
+}
+
+
+
+UseRadius.prototype.showDroppedFeedback = function()
+{
+
+	if (tweenBorderAlpha == undefined) 
+	{
+		var time = 500;
+		var autoStart = false; 
+		var scale = 1;
+		var alpha = 1;
+
+		var tweenBorderAlpha = game.add.tween(this.radiusBorder);
+		var tweenBorderScale = game.add.tween(this.radiusBorder.scale);
+
+		var tweenFillAlpha = game.add.tween(this.radiusFill);
+		var tweenFillScale = game.add.tween(this.radiusFill.scale);
+
+		tweenBorderAlpha.to( { alpha: alpha }, time, Phaser.Easing.Bounce.Out, autoStart, 0, 0, false);
+		tweenBorderScale.to( { x: scale, y: scale }, time, Phaser.Easing.Bounce.Out, autoStart, 0, 0, false);
+
+		tweenFillAlpha.to( { alpha: alpha }, time, Phaser.Easing.Bounce.Out, autoStart, 0, 0, false);
+		tweenFillScale.to( { x: scale, y: scale }, time, Phaser.Easing.Bounce.Out, autoStart, 0, 0, false);
+		tweenFillScale.onStart.add(function() 
+		{
+			this.isActive = true;
+		}, this);
+
+		tweenFillScale.onComplete.add(function() 
+		{
+
+		}, this);
+	};
+
+	
+	this.group.x = this.entityParent.x 
+	this.group.y = this.entityParent.y 
+
+	tweenBorderAlpha.start();
+	tweenBorderScale.start();
+
+	tweenFillAlpha.start();
+	tweenFillScale.start();
+
 }

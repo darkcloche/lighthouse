@@ -1,7 +1,7 @@
 var ACTIVE_HINTS_ARRAY = [];
 var HINTS_GROUP = null;
 
-function Hint(buttonType, startEnabled, group, offsetX, offsetY, entityParentObject, callback)
+function Hint(buttonType, startEnabled, group, offsetX, offsetY, entityParentObject, actionType)
 {
 	//tweakable vars
 	this.buttonScale = 1;
@@ -22,12 +22,12 @@ function Hint(buttonType, startEnabled, group, offsetX, offsetY, entityParentObj
 	this.isVisible = false; //is true when it is at all visible (during tweens included)
 	this.hasBeenPressed = false;
 	this.buttonType = buttonType.toUpperCase();
-	this.callback = callback;
+	this.actionType = actionType;
 	this.offsetDirection = 1;
 
 
 	//button sprite
-	this.button = game.add.sprite(group.x + offsetX, group.y + offsetY, "button" + this.buttonType);
+	this.button = game.add.sprite(offsetX, offsetY, "button" + this.buttonType);
 	this.button.alpha = 0;
 	this.button.anchor.setTo(0.5, 0.5);	
 	this.button.scale.x = this.button.scale.y = this.buttonScale;
@@ -36,20 +36,14 @@ function Hint(buttonType, startEnabled, group, offsetX, offsetY, entityParentObj
 
 
 	//gradient sprite
-	this.gradient = game.add.sprite(group.x + offsetX, group.y + offsetY, "buttonGradient");
+	this.gradient = game.add.sprite(offsetX, offsetY, "buttonGradient");
 	this.gradient.alpha = 0;
 	this.gradient.anchor.setTo(0.5, 0.5);
 	this.gradient.scale.x = this.gradient.scale.y = this.buttonScale;
 	HINTS_GROUP.add(this.gradient);
 	group.add(this.gradient);
 
-
-	//different creation outcomes based on params
-	if (this.callback == PLAYER_OBJECT.doPickUpEntity)
-	{
-		this.isAttachedToEntity = true;
-	}
-
+	//conditional start
 	if (startEnabled)
 	{
 		this.unHide(true);
@@ -61,7 +55,7 @@ function Hint(buttonType, startEnabled, group, offsetX, offsetY, entityParentObj
 
 Hint.prototype.updateOffset = function() 
 {
-	if (this.isAttachedToEntity) 
+	if (this.actionType == "PickUp" || this.actionType == "Drop") 
 	{
 		if (!this.isVisible) //this updates the offset direction that the hint should be at so when the hint enables, it shifts to the correct pos
 		{
@@ -76,7 +70,7 @@ Hint.prototype.updateOffset = function()
 			}
 		}
 
-		if (this.isVisible && CURRENT_USABLE_ENTITY_OBJECT != false)
+		if (this.isVisible)
 		{
 			if (PLAYER.y < this.entityParentObject.entity.y && this.offsetDirection == 0)
 			{
@@ -91,6 +85,23 @@ Hint.prototype.updateOffset = function()
 			}
 		}
 	}	
+}
+
+
+
+Hint.prototype.forceUpdateOffset = function() 
+{
+	if (PLAYER.y < this.entityParentObject.entity.y) 
+	{
+		this.button.y=  -this.offsetY;
+		this.gradient.y = -this.offsetY;
+	}
+
+	else
+	{
+		this.button.y = this.offsetY;
+		this.gradient.y = this.offsetY;
+	}
 }
 
 
@@ -193,21 +204,32 @@ Hint.prototype.pressed = function()
 		this.buttonTweenPressedAlpha.to( { alpha: 0 }, fadeOutTime, Phaser.Easing.Quadratic.InOut, autoStart, delay, 0, false);
 		this.buttonTweenPressedScale.to( { x: pressedScale, y: pressedScale }, fadeInTime, Phaser.Easing.Linear.InOut, autoStart, delay, 0, false);
 
+		this.gradientTweenPressedScale.to( { x: pressedScale, y: pressedScale }, fadeInTime, Phaser.Easing.Linear.InOut, autoStart, delay, 0, false);
 		this.gradientTweenPressedAlpha.to( { alpha: gradientAlpha }, fadeInTime, Phaser.Easing.Linear.InOut, autoStart, delay, 0, false);
 		this.gradientTweenPressedAlpha.to( { alpha: 0 }, gradientFadeOutTime, Phaser.Easing.Quadratic.InOut, autoStart, delay, 0, false);
-		this.gradientTweenPressedScale.to( { x: pressedScale, y: pressedScale }, fadeInTime, Phaser.Easing.Linear.InOut, autoStart, delay, 0, false);
-
-		this.gradientTweenPressedScale.onStart.add(function() 
+		this.gradientTweenPressedAlpha.onStart.add(function() 
 		{	
-			if (this.isAttachedToEntity)
+			if (this.actionType == "PickUp")
 			{
-				this.callback();
+				PLAYER_OBJECT.doPickUpEntity(CURRENT_USABLE_ENTITY_OBJECT);
 				CURRENT_USABLE_ENTITY_OBJECT = false;
 			}
+
+			if (this.actionType == "Drop")
+			{
+				PLAYER_OBJECT.doDropEntity();
+				PLAYER_OBJECT.pickedEntity = false;
+			}
+
 		}, this);
 
-		this.gradientTweenPressedScale.onComplete.add(function() 
+		this.gradientTweenPressedAlpha.onComplete.add(function() 
 		{
+			if (this.actionType == "PickUp")
+			{
+				PLAYER_OBJECT.onObjectPickedUp(); //triggered because i want to to allow entity drops after this feedback has gone away
+			}
+
 			this.isVisible = false;
 		}, this);
 	}
@@ -230,7 +252,7 @@ Hint.prototype.moveHintOffsetDown = function()
 		var autoStart = false;
 		var time = 300;
 		var delay = 0;
-		var posY = this.group.y - this.offsetY;
+		var posY = -this.offsetY;
 
 		this.buttonTweenMoveOffsetDown = game.add.tween(this.button);
 		this.gradientTweenMoveOffsetDown = game.add.tween(this.gradient);
@@ -252,7 +274,7 @@ Hint.prototype.moveHintOffsetUp = function()
 		var autoStart = false;
 		var time = 300;
 		var delay = 0;
-		var posY = this.group.y + this.offsetY;
+		var posY = this.offsetY;
 
 		this.buttonTweenMoveOffsetDownUp = game.add.tween(this.button);
 		this.gradientTweenMoveOffsetDownUp = game.add.tween(this.gradient);
