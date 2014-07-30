@@ -43,15 +43,24 @@ function Entity(type, x, y, usable)
 	this.isUsable = usable;
 
 
-	//if entity is usable, add UI
+	//if entity is usable, add interactive elements
 	if (this.isUsable) 
 	{
 		this.usableUIGroup = game.add.group()
 		this.usableUIGroup.x = x;
 		this.usableUIGroup.y = y;
+
+		//shows the radius around the entity when near
 		this.useRadius = new UseRadius(this);
+
+		// prompts for teaching pickups
 		this.usePromptPickUp = new Hint("e", false, this.usableUIGroup, 0, -35, this, "PickUp");
-		this.usePromptDrop = new Hint("e", false, this.usableUIGroup, 0, -35, this, "Drop");
+		// this.usePromptDrop = new Hint("e", false, this.usableUIGroup, 0, -35, this, "Drop"); 
+		// removing drop prompt for now, was getting a bit cluttered
+
+		//TODO add objects here that control pickability - ActionListeners? could simplify hint code A LOT. 
+		//trigger hint to go away as a result of this rather than tie all input into hint
+
 	};
 };
 

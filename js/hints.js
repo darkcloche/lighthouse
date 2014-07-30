@@ -200,14 +200,14 @@ Hint.prototype.pressed = function()
 		this.gradientTweenPressedAlpha = game.add.tween(this.gradient);
 		this.gradientTweenPressedScale = game.add.tween(this.gradient.scale);	
 
-		this.buttonTweenPressedAlpha.to( { alpha: fadeToAlpha }, fadeInTime, Phaser.Easing.Linear.InOut, autoStart, delay, 0, false);
-		this.buttonTweenPressedAlpha.to( { alpha: 0 }, fadeOutTime, Phaser.Easing.Quadratic.InOut, autoStart, delay, 0, false);
-		this.buttonTweenPressedScale.to( { x: pressedScale, y: pressedScale }, fadeInTime, Phaser.Easing.Linear.InOut, autoStart, delay, 0, false);
-
 		this.gradientTweenPressedScale.to( { x: pressedScale, y: pressedScale }, fadeInTime, Phaser.Easing.Linear.InOut, autoStart, delay, 0, false);
 		this.gradientTweenPressedAlpha.to( { alpha: gradientAlpha }, fadeInTime, Phaser.Easing.Linear.InOut, autoStart, delay, 0, false);
 		this.gradientTweenPressedAlpha.to( { alpha: 0 }, gradientFadeOutTime, Phaser.Easing.Quadratic.InOut, autoStart, delay, 0, false);
-		this.gradientTweenPressedAlpha.onStart.add(function() 
+
+		this.buttonTweenPressedScale.to( { x: pressedScale, y: pressedScale }, fadeInTime, Phaser.Easing.Linear.InOut, autoStart, delay, 0, false);
+		this.buttonTweenPressedAlpha.to( { alpha: fadeToAlpha }, fadeInTime, Phaser.Easing.Linear.InOut, autoStart, delay, 0, false);
+		this.buttonTweenPressedAlpha.to( { alpha: 0 }, fadeOutTime, Phaser.Easing.Quadratic.InOut, autoStart, delay, 0, false);
+		this.buttonTweenPressedAlpha.onStart.add(function() 
 		{	
 			if (this.actionType == "PickUp")
 			{
@@ -223,15 +223,19 @@ Hint.prototype.pressed = function()
 
 		}, this);
 
-		this.gradientTweenPressedAlpha.onComplete.add(function() 
+		this.buttonTweenPressedAlpha._lastChild.onComplete.add(function() 
 		{
-			if (this.actionType == "PickUp")
+			if (this.actionType == "PickUp" && this.entityParentObject.usePromptDrop !== undefined) //disabled this hint for now but keeping code hooks around in case i want to bring it back
 			{
-				PLAYER_OBJECT.onObjectPickedUp(); //triggered because i want to to allow entity drops after this feedback has gone away
+				game.time.events.add(Phaser.Timer.SECOND * 0.2, PLAYER_OBJECT.onObjectPickedUp, PLAYER_OBJECT);
 			}
 
 			this.isVisible = false;
 		}, this);
+
+
+
+
 	}
 
 	this.buttonTweenUnHide.stop();

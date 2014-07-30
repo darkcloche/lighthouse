@@ -178,46 +178,37 @@ UseRadius.prototype.showLeaveRadiusFeedback = function()
 
 UseRadius.prototype.showUsedFeedback = function()
 {
+	//tween initialised every time as opposed to just first time because object position can change - should be safe as impossible to clash tweens in this state
 
-	if (tweenBorderAlpha == undefined) 
+	var moveTime = 250;
+	var scaleTime = 375;
+	var autoStart = false; 
+	var endScale = 0;
+	var endAlpha = 0;
+
+	var tweenBorderAlpha = game.add.tween(this.radiusBorder);
+	var tweenBorderScale = game.add.tween(this.radiusBorder.scale);
+	var tweenFillAlpha = game.add.tween(this.radiusFill);
+	var tweenFillScale = game.add.tween(this.radiusFill.scale);
+	var tweenGroupPos = game.add.tween(this.group);
+
+	tweenBorderAlpha.to( { alpha: endAlpha }, scaleTime, Phaser.Easing.Quadratic.Out, autoStart, 0, 0, false);
+	tweenBorderScale.to( { x: endScale, y: endScale }, scaleTime, Phaser.Easing.Quadratic.Out, autoStart, 0, 0, false);
+
+	tweenFillAlpha.to( { alpha: endAlpha }, scaleTime, Phaser.Easing.Quadratic.Out, autoStart, 0, 0, false);
+	tweenFillScale.to( { x: endScale, y: endScale }, scaleTime, Phaser.Easing.Quadratic.Out, autoStart, 0, 0, false);
+
+	tweenGroupPos.to( { x: this.entityParent.x, y: this.entityParent.y }, moveTime, Phaser.Easing.Quadratic.Out, autoStart, 0, 0, false);
+	tweenGroupPos.onStart.add(function() 
 	{
-		var moveTime = 250;
-		var scaleTime = 375;
-		var autoStart = false; 
-		var playerX = PLAYER.x; 
-		var playerY = PLAYER.y;
-		var posOffsetX = this.entityParentObject.pickedOffsetX;
-		var posOffsetY = this.entityParentObject.pickedOffsetY;
+		this.isActive = false;
+		this.entityParentObject.stopCanPickUpFeedback();
+	}, this);
 
-		var endScale = 0;
-		var endAlpha = 0;
+	tweenGroupPos.onComplete.add(function() 
+	{
 
-		var tweenBorderAlpha = game.add.tween(this.radiusBorder);
-		var tweenBorderScale = game.add.tween(this.radiusBorder.scale);
-
-		var tweenFillAlpha = game.add.tween(this.radiusFill);
-		var tweenFillScale = game.add.tween(this.radiusFill.scale);
-
-		var tweenGroupPos = game.add.tween(this.group);
-
-		tweenBorderAlpha.to( { alpha: endAlpha }, scaleTime, Phaser.Easing.Quadratic.Out, autoStart, 0, 0, false);
-		tweenBorderScale.to( { x: endScale, y: endScale }, scaleTime, Phaser.Easing.Quadratic.Out, autoStart, 0, 0, false);
-
-		tweenFillAlpha.to( { alpha: endAlpha }, scaleTime, Phaser.Easing.Quadratic.Out, autoStart, 0, 0, false);
-		tweenFillScale.to( { x: endScale, y: endScale }, scaleTime, Phaser.Easing.Quadratic.Out, autoStart, 0, 0, false);
-
-		tweenGroupPos.to( { x: posOffsetX, y: posOffsetY }, moveTime, Phaser.Easing.Quadratic.Out, autoStart, 0, 0, false);
-		tweenGroupPos.onStart.add(function() 
-		{
-			this.isActive = false;
-			this.entityParentObject.stopCanPickUpFeedback();
-		}, this);
-
-		tweenGroupPos.onComplete.add(function() 
-		{
-
-		}, this);
-	};
+	}, this);
 
 	this.isActive = false;
 
@@ -238,10 +229,11 @@ UseRadius.prototype.showDroppedFeedback = function()
 
 	if (tweenBorderAlpha == undefined) 
 	{
-		var time = 500;
+		var time = 400;
 		var autoStart = false; 
 		var scale = 1;
-		var alpha = 1;
+		var borderAlpha = 0.6;
+		var fillAlpha = 0.3;
 
 		var tweenBorderAlpha = game.add.tween(this.radiusBorder);
 		var tweenBorderScale = game.add.tween(this.radiusBorder.scale);
@@ -249,10 +241,10 @@ UseRadius.prototype.showDroppedFeedback = function()
 		var tweenFillAlpha = game.add.tween(this.radiusFill);
 		var tweenFillScale = game.add.tween(this.radiusFill.scale);
 
-		tweenBorderAlpha.to( { alpha: alpha }, time, Phaser.Easing.Bounce.Out, autoStart, 0, 0, false);
+		tweenBorderAlpha.to( { alpha: borderAlpha }, time, Phaser.Easing.Bounce.Out, autoStart, 0, 0, false);
 		tweenBorderScale.to( { x: scale, y: scale }, time, Phaser.Easing.Bounce.Out, autoStart, 0, 0, false);
 
-		tweenFillAlpha.to( { alpha: alpha }, time, Phaser.Easing.Bounce.Out, autoStart, 0, 0, false);
+		tweenFillAlpha.to( { alpha: fillAlpha }, time, Phaser.Easing.Bounce.Out, autoStart, 0, 0, false);
 		tweenFillScale.to( { x: scale, y: scale }, time, Phaser.Easing.Bounce.Out, autoStart, 0, 0, false);
 		tweenFillScale.onStart.add(function() 
 		{
@@ -261,6 +253,13 @@ UseRadius.prototype.showDroppedFeedback = function()
 
 		tweenFillScale.onComplete.add(function() 
 		{
+			if (this.distanceToPlayer >= this.usableRange) 
+			{
+				this.feedbackState = 1;
+				this.showLeaveRadiusFeedback;
+			}
+
+			this.isActive = true;
 
 		}, this);
 	};
