@@ -290,5 +290,4 @@ UseRadius.prototype.showDroppedFeedback = function()
 
 	tweenFillAlpha.start();
 	tweenFillScale.start();
-
 }
