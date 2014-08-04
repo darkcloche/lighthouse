@@ -4,19 +4,19 @@ var PLAYER_GROUP = null;
 var LEVEL_GROUP = null;
 
 
-
 function Player(x, y, startHintsEnabled)
 {
 	//vars
 	this.playerAcceleration = 1500;
 
 	var playerMaxSpeed = 150;
-	var playerDrag = 1250;
+	var playerDrag = 1250; 
 	var playerScale = 1;
 	var hintOffset = 45;
 
 	//init state of some vars
 	this.pickedEntity = null;
+	this.currentUsableEntity = null;
 
 	//loads sprite
 	this.player = game.add.sprite(x, y, "player");
@@ -38,51 +38,57 @@ function Player(x, y, startHintsEnabled)
 	LEVEL_GROUP.add(PLAYER_GROUP); 
 
 	//hints
-	var hintsGroup = game.add.group()
-	this.player.addChild(hintsGroup);
+	this.hintsGroup = game.add.group()
+	this.player.addChild(this.hintsGroup);
 
-
-	if (startHintsEnabled) 
+	if (startHintsEnabled)
 	{
-		this.upHint = new Hint("w", true, hintsGroup, 0, -hintOffset, PLAYER_OBJECT);
-		this.leftHint = new Hint("a", true, hintsGroup, -hintOffset, 0, PLAYER_OBJECT);
-		this.downHint = new Hint("s", true, hintsGroup, -0, hintOffset, PLAYER_OBJECT);
-		this.rightHint = new Hint("d", true, hintsGroup, hintOffset, 0, PLAYER_OBJECT);
+		var startEnabled = true;
+
+		this.upHint = new Hint("W", startEnabled, this.hintsGroup, 0, -hintOffset, PLAYER_OBJECT);
+		this.leftHint = new Hint("A", startEnabled, this.hintsGroup, -hintOffset, 0, PLAYER_OBJECT);
+		this.downHint = new Hint("S", startEnabled, this.hintsGroup, -0, hintOffset, PLAYER_OBJECT);
+		this.rightHint = new Hint("D", startEnabled, this.hintsGroup, hintOffset, 0, PLAYER_OBJECT);
 	}
+
+	//action setup
+	this.useAction = new PlayerAction("E", this.useObject);
 };
 
 
 
-Player.prototype.updateMovement = function() {
-
+Player.prototype.updateMovement = function() 
+{
 	//applies acceleration in the required direction when key is pressed, and updates hint
-	if (this.inputIsActive("W")) 
+	if (game.input.keyboard.isDown(Phaser.Keyboard.W))
 	{
 		this.player.body.acceleration.y = -this.playerAcceleration;
 	}
 
-	if (this.inputIsActive("S")) 
+	if (game.input.keyboard.isDown(Phaser.Keyboard.S))
 	{
 		this.player.body.acceleration.y = this.playerAcceleration;
 	}
 
-	if (this.inputIsActive("A")) 
+	if (game.input.keyboard.isDown(Phaser.Keyboard.A))
 	{
 		this.player.body.acceleration.x = -this.playerAcceleration;
 	}
 
-	if (this.inputIsActive("D")) 
+	if (game.input.keyboard.isDown(Phaser.Keyboard.D))
 	{
 		this.player.body.acceleration.x = this.playerAcceleration;
 	}
 
 	//if no keys are not held down or opposite keys are held down, reset acceleration
-	if ((!this.inputIsActive("W") && !this.inputIsActive("S")) || (this.inputIsActive("W") && this.inputIsActive("S")))
+	if ((!game.input.keyboard.isDown(Phaser.Keyboard.W) && !game.input.keyboard.isDown(Phaser.Keyboard.S)) 
+		|| (game.input.keyboard.isDown(Phaser.Keyboard.W) && game.input.keyboard.isDown(Phaser.Keyboard.S)))
 	{
 		this.player.body.acceleration.y = 0;
 	}
 
-	if ((!this.inputIsActive("A") && !this.inputIsActive("D")) || (this.inputIsActive("A") && this.inputIsActive("D")))
+	if ((!game.input.keyboard.isDown(Phaser.Keyboard.A) && !game.input.keyboard.isDown(Phaser.Keyboard.D)) 
+		|| (game.input.keyboard.isDown(Phaser.Keyboard.A) && game.input.keyboard.isDown(Phaser.Keyboard.D)))
 	{
 		this.player.body.acceleration.x = 0;
 	}
@@ -90,52 +96,24 @@ Player.prototype.updateMovement = function() {
 
 
 
-//checks if supplied button name is currently pressed down
-Player.prototype.inputIsActive = function(button)
-{
-	var isActive = false;
-	button = button.toUpperCase();
 
-	//takes the button passed in to the function and checks if it"s pressed
-	if (button !== undefined) 
+Player.prototype.useObject = function() 
+{
+
+	if (this.pickedEntity !== null)
 	{
-		isActive = game.input.keyboard.isDown(Phaser.Keyboard[button.toString()]);
+		this.pickedEntity.isPicked = false;
+		this.pickedEntity.stopPickedUpFeedback();
+		this.pickedEntity.useRadius.showDroppedFeedback();
+		this.pickedEntity = null;
 	}
-	
-	return isActive;
-}
 
-
-
-//checks if supplied button name is currently pressed down
-Player.prototype.doPickUpEntity = function(object)
-{
-	// updates entity feedback, enables ability to drop
-	this.pickedEntity = object;
-	
-	this.pickedEntity.isPicked = true;
-	this.pickedEntity.startPickedUpFeedback();
-	this.pickedEntity.useRadius.showUsedFeedback();
-}
-
-
-
-//checks if supplied button name is currently pressed down
-Player.prototype.doDropEntity = function()
-{
-	// updates entity feedback, re-enables ability to pick up
-	this.pickedEntity.isPicked = false;
-	this.pickedEntity.stopPickedUpFeedback();
-	this.pickedEntity.useRadius.showDroppedFeedback();
-
-	this.pickedEntity = false;
-}
-
-
-
-//checks if supplied button name is currently pressed down
-Player.prototype.onObjectPickedUp = function()
-{
-	this.pickedEntity.usePromptDrop.forceUpdateOffset();
-	this.pickedEntity.usePromptDrop.unHide();
+	if (this.currentUsableEntity !== null && this.pickedEntity == null) 
+	{
+		this.pickedEntity = this.currentUsableEntity;
+		this.pickedEntity.isPicked = true;
+		this.pickedEntity.startPickedUpFeedback();
+		this.pickedEntity.useRadius.showUsedFeedback();
+		this.currentUsableEntity = null;
+	}
 }

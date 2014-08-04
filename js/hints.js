@@ -1,7 +1,8 @@
 var ACTIVE_HINTS_ARRAY = [];
 var HINTS_GROUP = null;
 
-function Hint(buttonType, startEnabled, group, offsetX, offsetY, entityParentObject, actionType)
+
+function Hint(buttonType, startEnabled, group, offsetX, offsetY, parentObject, action)
 {
 	//tweakable vars
 	this.buttonScale = 1;
@@ -12,17 +13,28 @@ function Hint(buttonType, startEnabled, group, offsetX, offsetY, entityParentObj
 
 
 	//member vars set by constructor params
-	this.entityParentObject = entityParentObject;
+	this.parentObject = parentObject;
 	this.group = group;
 	this.offsetX = offsetX;
 	this.offsetY = offsetY;
+	this.buttonType = buttonType;
+
+	//sets a different hint parent (used by updating offset positions) based on type of parent object
+	if (parentObject == PLAYER_OBJECT)
+	{
+		this.hintParent = PLAYER;
+	}
+
+	else 
+	{
+		this.hintParent = parentObject.entity;
+	}
 
 
 	//init state of some vars
 	this.isVisible = false; //is true when it is at all visible (during tweens included)
 	this.hasBeenPressed = false;
-	this.buttonType = buttonType.toUpperCase();
-	this.actionType = actionType;
+	this.buttonType = buttonType;
 	this.offsetDirection = 1;
 
 
@@ -48,18 +60,17 @@ function Hint(buttonType, startEnabled, group, offsetX, offsetY, entityParentObj
 	{
 		this.unHide(true);
 	}
-
 }
 
 
 
 Hint.prototype.updateOffset = function() 
 {
-	if (this.actionType == "PickUp" || this.actionType == "Drop") 
+	if (!this.hasBeenPressed && this.hintParent !== PLAYER)
 	{
 		if (!this.isVisible) //this updates the offset direction that the hint should be at so when the hint enables, it shifts to the correct pos
 		{
-			if (PLAYER.y < this.entityParentObject.entity.y) 
+			if (PLAYER.y < this.parentObject.entity.y) 
 			{
 				this.offsetDirection = 0;
 			}
@@ -72,26 +83,26 @@ Hint.prototype.updateOffset = function()
 
 		if (this.isVisible)
 		{
-			if (PLAYER.y < this.entityParentObject.entity.y && this.offsetDirection == 0)
+			if (PLAYER.y < this.parentObject.entity.y && this.offsetDirection == 0)
 			{
 				this.offsetDirection = 1;
 				this.moveHintOffsetDown();
 			}
 
-			if (PLAYER.y > this.entityParentObject.entity.y && this.offsetDirection == 1)
+			if (PLAYER.y > this.parentObject.entity.y && this.offsetDirection == 1)
 			{
 				this.offsetDirection = 0;
 				this.moveHintOffsetUp();
 			}
 		}
-	}	
+	}
 }
 
 
 
 Hint.prototype.forceUpdateOffset = function() 
 {
-	if (PLAYER.y < this.entityParentObject.entity.y) 
+	if (PLAYER.y < this.parentObject.entity.y) 
 	{
 		this.button.y=  -this.offsetY;
 		this.gradient.y = -this.offsetY;
@@ -108,7 +119,7 @@ Hint.prototype.forceUpdateOffset = function()
 
 Hint.prototype.updatePressedState = function() 
 {
-	if (PLAYER_OBJECT.inputIsActive(this.buttonType) && !this.hasBeenPressed && this.isVisible) 
+	if (game.input.keyboard.isDown(Phaser.Keyboard[this.buttonType]) && !this.hasBeenPressed && this.isVisible) 
 	{
 		this.pressed();
 		this.hasBeenPressed = true;
@@ -128,20 +139,6 @@ Hint.prototype.hide = function()
 
 		this.buttonTweenHide = game.add.tween(this.button);
 		this.buttonTweenHide.to( { alpha: 0 }, fadeOutTime, Phaser.Easing.Quadratic.InOut, autoStart, delay, 0, false);
-
-		this.buttonTweenHide.onStart.add(function() 
-		{
-
-		}, this);
-
-		this.buttonTweenHide.onComplete.add(function() 
-		{
-			this.isVisible = false;
-			if (!this.buttonTweenUnHide.isRunning) 
-			{
-				CURRENT_USABLE_ENTITY_OBJECT = false;
-			}
-		}, this);
 	}
 
 	this.buttonTweenHide.start();
@@ -168,7 +165,6 @@ Hint.prototype.unHide = function(isRandomlyDelayed)
 		this.buttonTweenUnHide.onStart.add(function() 
 		{
 			this.isVisible = true;
-			CURRENT_USABLE_ENTITY_OBJECT = this.entityParentObject;
 		}, this);
 
 		this.buttonTweenUnHide.onComplete.add(function() 
@@ -209,33 +205,13 @@ Hint.prototype.pressed = function()
 		this.buttonTweenPressedAlpha.to( { alpha: 0 }, fadeOutTime, Phaser.Easing.Quadratic.InOut, autoStart, delay, 0, false);
 		this.buttonTweenPressedAlpha.onStart.add(function() 
 		{	
-			if (this.actionType == "PickUp")
-			{
-				PLAYER_OBJECT.doPickUpEntity(CURRENT_USABLE_ENTITY_OBJECT);
-				CURRENT_USABLE_ENTITY_OBJECT = false;
-			}
-
-			if (this.actionType == "Drop")
-			{
-				PLAYER_OBJECT.doDropEntity();
-				PLAYER_OBJECT.pickedEntity = false;
-			}
 
 		}, this);
 
 		this.buttonTweenPressedAlpha._lastChild.onComplete.add(function() 
 		{
-			if (this.actionType == "PickUp" && this.entityParentObject.usePromptDrop !== undefined) //disabled this hint for now but keeping code hooks around in case i want to bring it back
-			{
-				game.time.events.add(Phaser.Timer.SECOND * 0.2, PLAYER_OBJECT.onObjectPickedUp, PLAYER_OBJECT);
-			}
-
 			this.isVisible = false;
 		}, this);
-
-
-
-
 	}
 
 	this.buttonTweenUnHide.stop();

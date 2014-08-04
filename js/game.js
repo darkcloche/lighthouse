@@ -76,6 +76,7 @@ var DEBUG_VAR_1 = "";
 var DEBUG_VAR_2 = "";
 var DEBUG_VAR_3 = "";
 var DEBUG_VAR_4 = "";
+var DEBUG_ACTIVE = false;
 
 
 //called by "new Phaser.Game()"
@@ -83,12 +84,16 @@ GameState.prototype.create = function()
 {
 
 	//debug text
-	var style = { fill: "#FFFFFF" };
-	this.debugText0 = game.add.text(10, this.game.height - 160, "" , style);
-	this.debugText1 = game.add.text(10, this.game.height - 130, "" , style);
-	this.debugText2 = game.add.text(10, this.game.height - 100, "" , style);
-	this.debugText3 = game.add.text(10, this.game.height - 70, "" , style);
-	this.debugText4 = game.add.text(10, this.game.height - 40, "" , style);
+	if (DEBUG_ACTIVE) 
+	{
+		var style = { fill: "#FFFFFF" };
+		this.debugText0 = game.add.text(10, this.game.height - 160, "" , style);
+		this.debugText1 = game.add.text(10, this.game.height - 130, "" , style);
+		this.debugText2 = game.add.text(10, this.game.height - 100, "" , style);
+		this.debugText3 = game.add.text(10, this.game.height - 70, "" , style);
+		this.debugText4 = game.add.text(10, this.game.height - 40, "" , style);
+	}
+
 
 
 	//init
@@ -127,7 +132,7 @@ GameState.prototype.create = function()
 
 
 	//entities
-	light1 = new Entity("light", 100, 200, true);
+	light1 = new Entity("light", 100, 200, true, true);
 
 };
 
@@ -155,22 +160,41 @@ GameState.prototype.create = function()
 
 GameState.prototype.update = function()
 {
+	if (DEBUG_ACTIVE) 
+	{
+		//debug text
+		this.debugText0.text = "Debug Variables";
+		this.debugText1.text = "| " + DEBUG_VAR_1;
+		this.debugText2.text = "| " + DEBUG_VAR_2;
+		this.debugText3.text = "| " + DEBUG_VAR_3;
+		this.debugText4.text = "| " + DEBUG_VAR_4;
 
-	//debug text
-	this.debugText0.text = "Debug Variables";
-	this.debugText1.text = "| " + DEBUG_VAR_1;
-	this.debugText2.text = "| " + DEBUG_VAR_2;
-	this.debugText3.text = "| " + DEBUG_VAR_3;
-	this.debugText4.text = "| " + DEBUG_VAR_4;
-
-	// DEBUG_VAR_1 = "";
-	// DEBUG_VAR_2 = "";
-	// DEBUG_VAR_3 = "";
-	// DEBUG_VAR_4 = "";
+		// DEBUG_VAR_1 = "";
+		// DEBUG_VAR_2 = "";
+		// DEBUG_VAR_3 = "";
+		// DEBUG_VAR_4 = "";
+	}
 
 
-	//updates movement
+
+	//updates player movement
 	PLAYER_OBJECT.updateMovement();
+
+
+	//updates state of all player actions
+	for (i in PLAYER_ACTIONS_ARRAY)
+	{
+		PLAYER_ACTIONS_ARRAY[i].updateActionState();
+	}
+
+
+	//updates feedback state of all useradius objects
+	for (i in USERADIUS_ARRAY)
+	{
+		USERADIUS_ARRAY[i].updateClosestPlayerDistance();
+		USERADIUS_ARRAY[i].updateEnterRadiusFeedback();
+		USERADIUS_ARRAY[i].updateNearRadiusFeedback();
+	}
 
 
 	//updates collision of entities with player, updates positions of any picked entities
@@ -180,22 +204,12 @@ GameState.prototype.update = function()
 	}
 
 
-	//updates feedback state of all useradii
-	for (i in USERADIUS_ARRAY)
-	{
-		USERADIUS_ARRAY[i].updateClosestPlayerDistance();
-		USERADIUS_ARRAY[i].updateEnterRadiusFeedback();
-		USERADIUS_ARRAY[i].updateNearRadiusFeedback();
-	}
-
-
 	//updates state of all hints
 	for (i in ACTIVE_HINTS_ARRAY)
 	{
 		ACTIVE_HINTS_ARRAY[i].updatePressedState();
 		ACTIVE_HINTS_ARRAY[i].updateOffset();
 	}
-
 	
 };
 

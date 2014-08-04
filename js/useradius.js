@@ -1,7 +1,8 @@
 var USERADIUS_ARRAY = [];
 var USERADIUS_GROUP = null; //for depth sorting
 
-function UseRadius(entityParentObject) {
+
+function UseRadius(entityParentObject, playerAction) {
 
 	//adds to global entities array
 	USERADIUS_ARRAY[USERADIUS_ARRAY.length] = this;
@@ -11,6 +12,7 @@ function UseRadius(entityParentObject) {
 	this.entityParent = entityParentObject.entity;
 	this.entityParentObject = entityParentObject;
 	this.group = entityParentObject.usableUIGroup;
+	this.playerAction = playerAction;
 
 
 	//object tweakable parameters
@@ -53,8 +55,8 @@ UseRadius.prototype.updateClosestPlayerDistance = function()
 //updates feebdack to be correct based on player when called
 UseRadius.prototype.updateEnterRadiusFeedback = function()
 {
-	//show in radius feedback if f within range and the feedback state is not reflecting this
-	if (this.distanceToPlayer <= this.usableRange && this.feedbackState == 0 && this.isActive) 
+	//show in radius feedback if within range and the feedback state is not reflecting this
+	if (this.isActive && this.distanceToPlayer <= this.usableRange && this.feedbackState == 0) 
 	{ 
 		this.feedbackState = 1;
 		this.showEnterRadiusFeedback();
@@ -62,7 +64,7 @@ UseRadius.prototype.updateEnterRadiusFeedback = function()
 
 
 	//if not within range and the feedback state isn't reflecting this
-	else if (this.distanceToPlayer >= this.usableRange && this.feedbackState == 1 && this.isActive)
+	else if (this.isActive && this.distanceToPlayer >= this.usableRange && this.feedbackState == 1)
 	{
 		this.feedbackState = 0;
 		this.showLeaveRadiusFeedback();
@@ -117,8 +119,16 @@ UseRadius.prototype.showEnterRadiusFeedback = function()
 
 		tweenFillScale.onStart.add(function() 
 		{
-			this.entityParentObject.usePromptPickUp.unHide();
+			PLAYER_OBJECT.currentUsableEntity = this.entityParentObject;
+			PLAYER_OBJECT.useAction.enable();
 			this.entityParentObject.startCanPickUpFeedback();
+
+
+			//if there's a hint attached to the entity that hasn't been pressed, unhide it
+			if (this.entityParentObject.usePromptPickUp !== undefined && !this.entityParentObject.usePromptPickUp.hasBeenPressed)
+			{
+				this.entityParentObject.usePromptPickUp.unHide();
+			}
 		}, this);
 
 		tweenFillScale.onComplete.add(function() 
@@ -157,8 +167,16 @@ UseRadius.prototype.showLeaveRadiusFeedback = function()
 
 		tweenFillScale.onStart.add(function() 
 		{
-			this.entityParentObject.usePromptPickUp.hide();
+			PLAYER_OBJECT.currentUsableEntity = null;
+			PLAYER_OBJECT.useAction.disable();
 			this.entityParentObject.stopCanPickUpFeedback();
+
+			//if there's a hint attached to the entity that hasn't been pressed, hide it
+			if (this.entityParentObject.usePromptPickUp !== undefined && !this.entityParentObject.usePromptPickUp.hasBeenPressed)
+			{
+				this.entityParentObject.usePromptPickUp.hide();
+			}
+			
 		}, this);
 
 		tweenFillScale.onComplete.add(function() 
@@ -179,7 +197,6 @@ UseRadius.prototype.showLeaveRadiusFeedback = function()
 UseRadius.prototype.showUsedFeedback = function()
 {
 	//tween initialised every time as opposed to just first time because object position can change - should be safe as impossible to clash tweens in this state
-
 	var moveTime = 250;
 	var scaleTime = 375;
 	var autoStart = false; 
@@ -197,36 +214,30 @@ UseRadius.prototype.showUsedFeedback = function()
 
 	tweenFillAlpha.to( { alpha: endAlpha }, scaleTime, Phaser.Easing.Quadratic.Out, autoStart, 0, 0, false);
 	tweenFillScale.to( { x: endScale, y: endScale }, scaleTime, Phaser.Easing.Quadratic.Out, autoStart, 0, 0, false);
-
-	tweenGroupPos.to( { x: this.entityParent.x, y: this.entityParent.y }, moveTime, Phaser.Easing.Quadratic.Out, autoStart, 0, 0, false);
-	tweenGroupPos.onStart.add(function() 
+	tweenFillScale.onStart.add(function() 
 	{
 		this.isActive = false;
 		this.entityParentObject.stopCanPickUpFeedback();
+		PLAYER_OBJECT.useAction.disable();
+		PLAYER_OBJECT.currentUsableEntity = null;
 	}, this);
 
-	tweenGroupPos.onComplete.add(function() 
+	tweenFillScale.onComplete.add(function() 
 	{
-
+		PLAYER_OBJECT.useAction.enable();
 	}, this);
-
-	this.isActive = false;
 
 	tweenBorderAlpha.start();
 	tweenBorderScale.start();
 
 	tweenFillAlpha.start();
 	tweenFillScale.start();
-
-	tweenGroupPos.start();
-
 }
 
 
 
 UseRadius.prototype.showDroppedFeedback = function()
 {
-
 	if (tweenBorderAlpha == undefined) 
 	{
 		var time = 400;
@@ -248,23 +259,29 @@ UseRadius.prototype.showDroppedFeedback = function()
 		tweenFillScale.to( { x: scale, y: scale }, time, Phaser.Easing.Bounce.Out, autoStart, 0, 0, false);
 		tweenFillScale.onStart.add(function() 
 		{
-			this.isActive = true;
+			PLAYER_OBJECT.useAction.disable();
 		}, this);
 
 		tweenFillScale.onComplete.add(function() 
 		{
+			//if the player has left the radius by the time its finished dropping, show leave feedback
 			if (this.distanceToPlayer >= this.usableRange) 
 			{
-				this.feedbackState = 1;
-				this.showLeaveRadiusFeedback;
+				this.feedbackState = 0;
+				this.showLeaveRadiusFeedback();
+			}
+
+			else
+			{
+				this.showEnterRadiusFeedback();
 			}
 
 			this.isActive = true;
+			PLAYER_OBJECT.useAction.enable();
 
 		}, this);
 	};
 
-	
 	this.group.x = this.entityParent.x 
 	this.group.y = this.entityParent.y 
 

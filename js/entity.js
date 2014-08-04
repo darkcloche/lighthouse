@@ -1,6 +1,5 @@
 var ENTITIES_ARRAY = [];
 var ENTITIES_GROUP = null;
-var CURRENT_USABLE_ENTITY_OBJECT = null;
 var ENTITY_DICTIONARY = 
 {
 	light: 
@@ -15,7 +14,7 @@ var ENTITY_DICTIONARY =
 };
 
 
-function Entity(type, x, y, usable)
+function Entity(type, x, y, usable, hasHint)
 {
 	//adds entity to global entities array
 	ENTITIES_ARRAY[ENTITIES_ARRAY.length] = this;
@@ -24,6 +23,7 @@ function Entity(type, x, y, usable)
 	//initial variables for creation from function call
 	this.type = type;
 	this.entityInfo = ENTITY_DICTIONARY[this.type];
+	this.hasHint = hasHint;
 
 
 	//adds relevant entity type depending on object "type"
@@ -54,9 +54,9 @@ function Entity(type, x, y, usable)
 		this.useRadius = new UseRadius(this);
 
 		// prompts for teaching pickups
-		this.usePromptPickUp = new Hint("e", false, this.usableUIGroup, 0, -35, this, "PickUp");
-		// this.usePromptDrop = new Hint("e", false, this.usableUIGroup, 0, -35, this, "Drop"); 
-		// removing drop prompt for now, was getting a bit cluttered
+		if (this.hasHint) {
+			this.usePromptPickUp = new Hint("E", false, this.usableUIGroup, 0, -35, this, "PickUp");
+		}
 
 		//TODO add objects here that control pickability - ActionListeners? could simplify hint code A LOT. 
 		//trigger hint to go away as a result of this rather than tie all input into hint
@@ -68,7 +68,7 @@ function Entity(type, x, y, usable)
 
 Entity.prototype.updateCollision = function() 
 {
-	if (PLAYER_OBJECT.pickedEntity !== this) //removes collision on picked objects
+	if (PLAYER_OBJECT.pickedEntity !== this && PLAYER_OBJECT.currentUsableEntity == this) //stops collision on picked objects, only checks when in range
 	{
 		game.physics.arcade.collide(PLAYER, this.entity);
 	}
@@ -173,7 +173,3 @@ Entity.prototype.stopPickedUpFeedback = function()
 	this.droppedEntityTweenAlpha.start();
 	this.droppedEntityTweenScale.start();
 }
-
-
-
-
