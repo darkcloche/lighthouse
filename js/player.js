@@ -1,5 +1,6 @@
 var PLAYER = null;
 var PLAYER_OBJECT = null;
+var PLAYER_BOUNDS = null;
 var PLAYER_GROUP = null;
 var LEVEL_GROUP = null;
 
@@ -9,10 +10,10 @@ function Player(x, y, startHintsEnabled)
 	//vars
 	this.playerAcceleration = 1500;
 
-	var playerMaxSpeed = 150;
-	var playerDrag = 1250; 
+	var playerMaxSpeed = 225;
+	var playerDrag = 1600; 
 	var playerScale = 1;
-	var hintOffset = 45;
+	var hintOffset = 40;
 
 	//init state of some vars
 	this.pickedEntity = null;
@@ -57,9 +58,10 @@ function Player(x, y, startHintsEnabled)
 
 
 
+
 Player.prototype.updateMovement = function() 
 {
-	//applies acceleration in the required direction when key is pressed, and updates hint
+	//applies acceleration in the required direction when key inits pressed, and updates hint
 	if (game.input.keyboard.isDown(Phaser.Keyboard.W))
 	{
 		this.player.body.acceleration.y = -this.playerAcceleration;

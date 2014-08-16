@@ -28,7 +28,7 @@ function Entity(type, x, y, usable, hasHint)
 
 	//adds relevant entity type depending on object "type"
 	this.entity = game.add.sprite(x, y, this.entityInfo.textureName);
-	ENTITIES_GROUP.add(this.entity); //groups (used for depth sorting in game.js) - has to happen before parented to dummy as it does physical parenting too
+	ENTITIES_GROUP.add(this.entity);
 	this.entity.anchor.setTo(0.5, 0.5);
 	game.physics.enable(this.entity, Phaser.Physics.ARCADE);
 	game.physics.arcade.enableBody(this.entity);
@@ -49,18 +49,16 @@ function Entity(type, x, y, usable, hasHint)
 		this.usableUIGroup = game.add.group()
 		this.usableUIGroup.x = x;
 		this.usableUIGroup.y = y;
+		ENTITIES_GROUP.add(this.usableUIGroup);
 
 		//shows the radius around the entity when near
 		this.useRadius = new UseRadius(this);
 
 		// prompts for teaching pickups
-		if (this.hasHint) {
-			this.usePromptPickUp = new Hint("E", false, this.usableUIGroup, 0, -35, this, "PickUp");
+		if (this.hasHint) 
+		{
+			this.usePromptPickUp = new Hint("E", false, this.usableUIGroup, 0, -27, this, "PickUp");
 		}
-
-		//TODO add objects here that control pickability - ActionListeners? could simplify hint code A LOT. 
-		//trigger hint to go away as a result of this rather than tie all input into hint
-
 	};
 };
 

@@ -1,5 +1,5 @@
 /////////////////////////////////////////////////////////////
-
+var TESTLAYER = null;
 
 var GameState = function(game)
 {
@@ -40,6 +40,9 @@ GameState.prototype.preload = function()
 	this.load.image("buttonE", "assets/button_e.png");
 	this.load.image("buttonGradient", "assets/button_gradient.png");
 
+	//tilemap setup
+	this.load.image("walls_tilemap", "assets/tiles/walls_tilemap.png");
+	this.load.tilemap("level_intro", "assets/json/level_intro.json", null, Phaser.Tilemap.TILED_JSON);
 };
 
 
@@ -76,28 +79,25 @@ var DEBUG_VAR_1 = "";
 var DEBUG_VAR_2 = "";
 var DEBUG_VAR_3 = "";
 var DEBUG_VAR_4 = "";
-var DEBUG_ACTIVE = false;
 
 
-//called by "new Phaser.Game()"
+
+//called by new Phaser.Game()
 GameState.prototype.create = function()
 {
 
 	//debug text
-	if (DEBUG_ACTIVE) 
-	{
-		var style = { fill: "#FFFFFF" };
-		this.debugText0 = game.add.text(10, this.game.height - 160, "" , style);
-		this.debugText1 = game.add.text(10, this.game.height - 130, "" , style);
-		this.debugText2 = game.add.text(10, this.game.height - 100, "" , style);
-		this.debugText3 = game.add.text(10, this.game.height - 70, "" , style);
-		this.debugText4 = game.add.text(10, this.game.height - 40, "" , style);
-	}
+	var style = { fill: "#FFFFFF" };
+	this.debugText0 = game.add.text(10, this.game.height - 160, "" , style);
+	this.debugText1 = game.add.text(10, this.game.height - 130, "" , style);
+	this.debugText2 = game.add.text(10, this.game.height - 100, "" , style);
+	this.debugText3 = game.add.text(10, this.game.height - 70, "" , style);
+	this.debugText4 = game.add.text(10, this.game.height - 40, "" , style);
 
 
 
 	//init
-	this.stage.backgroundColor = 0x1E1F1E;
+	this.stage.backgroundColor = 0x404040;
 	game.physics.startSystem(Phaser.Physics.ARCADE);
 
 
@@ -124,15 +124,44 @@ GameState.prototype.create = function()
 	ENTITIES_GROUP = game.add.group(LEVEL_GROUP);
 	USERADIUS_GROUP = game.add.group(LEVEL_GROUP);
 	HINTS_GROUP = game.add.group(LEVEL_GROUP);
+	TILEMAP_LAYERS_GROUP = game.add.group(LEVEL_GROUP);
 
+
+	//tilemap
+	TILEMAP = this.add.tilemap("level_intro");
+	TILEMAP.addTilesetImage("walls_tilemap");
+
+
+	//makes main walls layer
+	WALLS = new TilemapLayer(TILEMAP.createLayer("walls"), true, false); 
+
+	//adds all layers starting with "fog" as dynamic layers with no physics
+	var levelFogEnabled = true;
+	if (levelFogEnabled)
+	{	
+		for (i in TILEMAP.layers) 
+		{
+			if (TILEMAP.layers[i].name[0] == "f" && TILEMAP.layers[i].name[1] == "o" && TILEMAP.layers[i].name[2] == "g")
+			{
+				new TilemapLayer(TILEMAP.createLayer(TILEMAP.layers[i].name), false, true);
+			}
+		}
+	}
 
 	//makes player
-	new Player(100, 100, true, false);
+	new Player(220, 288, true, false);
 	
 
-
 	//entities
-	light1 = new Entity("light", 100, 200, true, true);
+	new Entity("light", 420, 550, true, true);
+
+
+	//sorting order
+	LEVEL_GROUP.bringToTop(TILEMAP_LAYERS_GROUP);
+
+
+
+
 
 };
 
@@ -159,8 +188,9 @@ GameState.prototype.create = function()
 
 
 GameState.prototype.update = function()
-{
-	if (DEBUG_ACTIVE) 
+{	
+	var debugActive = false;
+	if (debugActive) 
 	{
 		//debug text
 		this.debugText0.text = "Debug Variables";
@@ -177,11 +207,8 @@ GameState.prototype.update = function()
 
 
 
-	//updates player movement
+	//player update
 	PLAYER_OBJECT.updateMovement();
-
-
-	//updates state of all player actions
 	for (i in PLAYER_ACTIONS_ARRAY)
 	{
 		PLAYER_ACTIONS_ARRAY[i].updateActionState();
@@ -194,6 +221,14 @@ GameState.prototype.update = function()
 		USERADIUS_ARRAY[i].updateClosestPlayerDistance();
 		USERADIUS_ARRAY[i].updateEnterRadiusFeedback();
 		USERADIUS_ARRAY[i].updateNearRadiusFeedback();
+	}
+
+
+	//updates collision and visibility of tilemap layers
+	for (i in TILEMAP_LAYERS_ARRAY) 
+	{
+		TILEMAP_LAYERS_ARRAY[i].updateCollision();
+		TILEMAP_LAYERS_ARRAY[i].updateVisibility();
 	}
 
 

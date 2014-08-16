@@ -1,5 +1,4 @@
 var USERADIUS_ARRAY = [];
-var USERADIUS_GROUP = null; //for depth sorting
 
 
 function UseRadius(entityParentObject, playerAction) {
@@ -16,9 +15,9 @@ function UseRadius(entityParentObject, playerAction) {
 
 
 	//object tweakable parameters
-	this.usableRange = 60;
+	this.usableRange = 50;
 	this.inRangeAlpha = 0.35;
-	this.visibleRange = 150;
+	this.visibleRange = 100;
 
 
 	//initial values of variables 
@@ -32,13 +31,11 @@ function UseRadius(entityParentObject, playerAction) {
 	this.radiusBorder = game.add.sprite(0, 0, "radiusBorder");
 	this.radiusBorder.anchor.setTo(0.5, 0.5);
 	this.radiusBorder.alpha = 0;
-	USERADIUS_GROUP.add(this.radiusBorder);
 	this.group.add(this.radiusBorder);
 
 	this.radiusFill = game.add.sprite(0, 0, "radiusFill");
 	this.radiusFill.anchor.setTo(0.5, 0.5);
 	this.radiusFill.alpha = 0;
-	USERADIUS_GROUP.add(this.radiusFill);
 	this.group.add(this.radiusFill);
 }
 
