@@ -3011,7 +3011,7 @@
    <tile gid="0"/>
   </data>
  </layer>
- <layer name="fog_start_room" width="50" height="30" opacity="0.6">
+ <layer name="fog_start_room" width="50" height="30" opacity="0.48">
   <data>
    <tile gid="0"/>
    <tile gid="0"/>
