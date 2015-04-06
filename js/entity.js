@@ -11,10 +11,18 @@ var ENTITY_DICTIONARY =
 		{ 
 			textureName: "entityBlocker",
 		},
+
+	macguffin: 
+		{ 
+			textureName: "macguffin",
+		},
 };
 
+//global variable for the single macguffin
+var MACGUFFIN = null;
 
-function Entity(type, x, y, usable, hasHint)
+
+function Entity(type, x, y, usable, hasHint, fadesAlphaWhenPicked)
 {
 	//adds entity to global entities array
 	ENTITIES_ARRAY[ENTITIES_ARRAY.length] = this;
@@ -24,6 +32,7 @@ function Entity(type, x, y, usable, hasHint)
 	this.type = type;
 	this.entityInfo = ENTITY_DICTIONARY[this.type];
 	this.hasHint = hasHint;
+	this.fadesAlphaWhenPicked = fadesAlphaWhenPicked;
 
 
 	//adds relevant entity type depending on object "type"
@@ -57,7 +66,7 @@ function Entity(type, x, y, usable, hasHint)
 		// prompts for teaching pickups
 		if (this.hasHint) 
 		{
-			this.usePromptPickUp = new Hint("E", false, this.usableUIGroup, 0, -27, this, "PickUp");
+			this.usePromptPickUp = new Hint("E", false, this.usableUIGroup, 0, -30, this, "PickUp");
 		}
 	};
 };
@@ -88,19 +97,26 @@ Entity.prototype.updatePickedOffsetPosition = function()
 Entity.prototype.startCanPickUpFeedback = function() 
 {
 
-	var time = 500;
+	var time = 350;
 	var autoStart = false;
 	var angle = 10;
-
+	var scaleStart = 1.25;
+	var scaleEnd = 1;
 	//this works strangely (i assume because of the loop behaviour) every other tween required only initialising .to's once but this wants them every time
 
 	this.entityTweenRotate = game.add.tween(this.entity);
+	this.entityTweenScale = game.add.tween(this.entity.scale);
 	
 	this.entityTweenRotate.to( { angle: angle }, time, Phaser.Easing.Linear.InOut, autoStart, 0, 0, false);
 	this.entityTweenRotate.to( { angle: -angle }, time, Phaser.Easing.Linear.InOut, autoStart, 0, 0, false);
 	this.entityTweenRotate.loop();
 
-	this.entityTweenRotate.start();
+	this.entityTweenScale.to( { x: scaleStart, y: scaleStart }, time, Phaser.Easing.Linear.Out, autoStart, 0, 0, false);
+	this.entityTweenScale.to( { x: scaleEnd, y: scaleEnd }, time, Phaser.Easing.Linear.Out, autoStart, 0, 0, false);
+	this.entityTweenScale.loop();
+
+	// this.entityTweenRotate.start();
+	this.entityTweenScale.start();
 
 	// this.entity.body.angularAcceleration = 300;
 	// went for a looping tween for now instead of constant rotation
@@ -111,6 +127,7 @@ Entity.prototype.startCanPickUpFeedback = function()
 Entity.prototype.stopCanPickUpFeedback = function() 
 {
 	this.entityTweenRotate.pause();
+	this.entityTweenScale.pause();
 
 	// this.entity.body.angularAcceleration = 0;
 	// went for a looping tween for now instead of constant rotation
@@ -120,36 +137,33 @@ Entity.prototype.stopCanPickUpFeedback = function()
 
 Entity.prototype.startPickedUpFeedback = function() 
 {
-	if (this.entityTweenAlpha == undefined) {
-
-		var time = 500;
+	if (this.entityTweenAlpha == undefined) 
+	{
+		var time = 300;
 		var autoStart = false;
 		var alphaStart = 0.25;
 		var alphaEnd = 0.5;
-		var scaleStart = 0.85;
-		var scaleEnd = 1;
+
 
 		this.pickedEntityTweenAlpha = game.add.tween(this.entity);
-		this.pickedEntityTweenScale = game.add.tween(this.entity.scale);
 		
 		this.pickedEntityTweenAlpha.to( { alpha: alphaStart }, time, Phaser.Easing.Linear.Out, autoStart, 0, 0, false);
 		this.pickedEntityTweenAlpha.to( { alpha: alphaEnd }, time, Phaser.Easing.Linear.Out, autoStart, 0, 0, false);
 		this.pickedEntityTweenAlpha.loop();
-		this.pickedEntityTweenScale.to( { x: scaleStart, y: scaleStart }, time, Phaser.Easing.Linear.Out, autoStart, 0, 0, false);
-		this.pickedEntityTweenScale.to( { x: scaleEnd, y: scaleEnd }, time, Phaser.Easing.Linear.Out, autoStart, 0, 0, false);
-		this.pickedEntityTweenScale.loop();
 	}
 
 	this.pickedOffsetX = PLAYER.x - this.entity.x;
 	this.pickedOffsetY = PLAYER.y - this.entity.y;
 
-	this.pickedEntityTweenAlpha.start();
-	this.pickedEntityTweenScale.start();
+	if (this.fadesAlphaWhenPicked) 
+	{
+		this.pickedEntityTweenAlpha.start();
+	}
 }
 
 
 
-Entity.prototype.stopPickedUpFeedback = function() 
+Entity.prototype.startDroppedFeedback = function() 
 {
 	if (this.droppedEntityTweenAlpha == undefined) {
 
@@ -166,7 +180,7 @@ Entity.prototype.stopPickedUpFeedback = function()
 	}
 
 	this.pickedEntityTweenAlpha.pause();
-	this.pickedEntityTweenScale.pause();
+	this.entityTweenScale.pause();
 
 	this.droppedEntityTweenAlpha.start();
 	this.droppedEntityTweenScale.start();

@@ -120,12 +120,12 @@ UseRadius.prototype.showEnterRadiusFeedback = function()
 			PLAYER_OBJECT.useAction.enable();
 			this.entityParentObject.startCanPickUpFeedback();
 
-
 			//if there's a hint attached to the entity that hasn't been pressed, unhide it
 			if (this.entityParentObject.usePromptPickUp !== undefined && !this.entityParentObject.usePromptPickUp.hasBeenPressed)
 			{
 				this.entityParentObject.usePromptPickUp.unHide();
 			}
+
 		}, this);
 
 		tweenFillScale.onComplete.add(function() 
@@ -214,7 +214,7 @@ UseRadius.prototype.showUsedFeedback = function()
 	tweenFillScale.onStart.add(function() 
 	{
 		this.isActive = false;
-		this.entityParentObject.stopCanPickUpFeedback();
+		// this.entityParentObject.stopCanPickUpFeedback();
 		PLAYER_OBJECT.useAction.disable();
 		PLAYER_OBJECT.currentUsableEntity = null;
 	}, this);

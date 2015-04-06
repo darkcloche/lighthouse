@@ -105,8 +105,13 @@ Player.prototype.useObject = function()
 	if (this.pickedEntity !== null)
 	{
 		this.pickedEntity.isPicked = false;
-		this.pickedEntity.stopPickedUpFeedback();
-		this.pickedEntity.useRadius.showDroppedFeedback();
+		this.pickedEntity.startDroppedFeedback();
+		
+		if (LEVEL_COMPLETE == false)
+		{
+			this.pickedEntity.useRadius.showDroppedFeedback();
+		}
+
 		this.pickedEntity = null;
 	}
 

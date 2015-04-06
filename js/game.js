@@ -31,6 +31,7 @@ GameState.prototype.preload = function()
 	this.load.image("radiusBorder", "assets/use_radius_border.png");
 	this.load.image("radiusFill", "assets/use_radius_fill.png");
 	this.load.image("entityLight", "assets/entity_light.png");
+	this.load.image("macguffin", "assets/macguffin.png");
 
 	//prompt assets
 	this.load.image("buttonW", "assets/button_w.png");
@@ -141,7 +142,7 @@ GameState.prototype.create = function()
 	{	
 		for (i in TILEMAP.layers) 
 		{
-			if (TILEMAP.layers[i].name[0] == "f" && TILEMAP.layers[i].name[1] == "o" && TILEMAP.layers[i].name[2] == "g")
+			if (TILEMAP.layers[i].name.indexOf("fog") == 0)
 			{
 				new TilemapLayer(TILEMAP.createLayer(TILEMAP.layers[i].name), false, true);
 			}
@@ -153,7 +154,8 @@ GameState.prototype.create = function()
 	
 
 	//entities
-	new Entity("light", 420, 550, true, true);
+	new Entity("light", 420, 550, true, true, true);
+	MACGUFFIN = new Entity("macguffin", 150, 300, true, true, false);
 
 
 	//sorting order
